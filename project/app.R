@@ -12,37 +12,71 @@ library(shiny)
 
 url1<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
 red.vino<-read.csv(url1, sep = ";")
+red.vino$type=rep("red", each=nrow(red.vino))
 
 url2<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
 white.vino<-read.csv(url2, sep = ";")
+white.vino$type=rep("white", each=nrow(white.vino))
 
+merged.vino=rbind(red.vino,white.vino)
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
-   
-   # Application title
-   titlePanel("Old Faithful Geyser Data"),
-   
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30)
-      ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-         plotOutput("distPlot")
-      )
-   )
+ui <- navbarPage("Project",
+                 # Application title
+                 tabPanel("Old Faithful Geyser Data",
+                          
+                          # Sidebar with a slider input for number of bins 
+                          sidebarLayout(
+                            sidebarPanel(
+                              #actionButton("download", "Download the data set"),
+                              sliderInput("bins",
+                                          "Number of bins:",
+                                          min = 1,
+                                          max = 50,
+                                          value = 30),
+                              
+                              # Show a plot of the generated distribution
+                              mainPanel(
+                                plotOutput("distPlot")
+                                )
+                              )
+                            )
+                          ),
+                 
+                 tabPanel("Data Exploration",
+                          
+                          # Sidebar with a slider input for number of bins
+                          sidebarLayout(
+                            sidebarPanel(
+                              fluidRow(
+                                column(4,
+                                       selectInput("type","Type:",
+                                                   c("All",unique(as.character(merged.vino$type))))),
+                                # Create a new row for the table.
+                                DT::dataTableOutput("table"),
+                                
+                                # Show a plot of the generated distribution
+                                mainPanel(
+                                  plotOutput("table"))
+                                )
+                            )
+                          )
+                 )
 )
+      
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
+  # Filter data based on selections
+  output$table <- DT::renderDataTable(DT::datatable({
+    data <- merged.vino
+    if (input$type != "All") {
+      data <- data[data$type == input$type,]
+    }
+    data
+  }))
+  
    output$distPlot <- renderPlot({
       # generate bins based on input$bins from ui.R
       x    <- faithful[, 2] 
