@@ -26,43 +26,40 @@ ui <- navbarPage("Project",
                  tabPanel("Old Faithful Geyser Data",
                           
                           # Sidebar with a slider input for number of bins 
-                          sidebarLayout(
+                          sidebarLayout(position="right",
                             sidebarPanel(
                               #actionButton("download", "Download the data set"),
                               sliderInput("bins",
                                           "Number of bins:",
                                           min = 1,
                                           max = 50,
-                                          value = 30),
-                              
-                              # Show a plot of the generated distribution
-                              mainPanel(
-                                plotOutput("distPlot")
-                                )
+                                          value = 30)),
+                            # Show a plot of the generated distribution
+                            mainPanel(
+                              plotOutput("distPlot")
                               )
                             )
                           ),
                  
                  tabPanel("Data Exploration",
                           
-                          # Sidebar with a slider input for number of bins
-                          sidebarLayout(
-                            sidebarPanel(
+                          
                               fluidRow(
                                 column(4,
                                        selectInput("type","Type:",
                                                    c("All",unique(as.character(merged.vino$type))))),
+                                column(4,
+                                       sliderInput("alcohol", label = ("Alcohol Content"), min = min(merged.vino$alcohol),
+                                                   max = max(merged.vino$alcohol), step = 0.1, value = c(10,12),
+                                                   animate = T, dragRange = T)),
+                                column(4,
+                                       sliderInput("quality", label = ("Quality"), min = min(merged.vino$quality),
+                                                   max = max(merged.vino$quality), step = 0.1, value = c(5,5),
+                                                   animate = T, dragRange = T)),
                                 # Create a new row for the table.
-                                DT::dataTableOutput("table"),
-                                
-                                # Show a plot of the generated distribution
-                                mainPanel(
-                                  plotOutput("table"))
-                                )
-                            )
+                                DT::dataTableOutput("table"))
                           )
                  )
-)
       
 
 # Define server logic required to draw a histogram
@@ -74,7 +71,15 @@ server <- function(input, output) {
     if (input$type != "All") {
       data <- data[data$type == input$type,]
     }
+    
+    #Choose the correct alcohol interval
+    data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
+    
+    #Choose the correct quality interval
+    data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
+    
     data
+      
   }))
   
    output$distPlot <- renderPlot({
@@ -89,5 +94,4 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-#raquel
 
