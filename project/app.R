@@ -8,9 +8,9 @@
 #
 
 library(shiny)
-url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Description.docx"
+url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
-vino=read.csv(url,sep=";")
+vino=read.csv(url,header=TRUE,sep=";")
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -38,15 +38,15 @@ ui <- navbarPage("Project",
                           
                               fluidRow(
                                 column(4,
-                                       selectInput("type","Type:",
-                                                   c("All",unique(as.character(vino$type))))),
+                                       selectInput("variant","Variant:",
+                                                   c("All",unique(as.character(vino$Variant))))),
                                 column(4,
                                        sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
                                                    max = max(vino$alcohol), step = 0.1, value = c(10,12),
                                                    animate = T, dragRange = T)),
                                 column(4,
                                        sliderInput("quality", label = ("Quality"), min = min(vino$quality),
-                                                   max = max(vino$quality), step = 0.1, value = c(5,5),
+                                                   max = max(vino$quality), step = 0.1, value = c(5,8),
                                                    animate = T, dragRange = T)),
                                 # Create a new row for the table.
                                 DT::dataTableOutput("table"))
@@ -60,8 +60,8 @@ server <- function(input, output) {
   # Filter data based on selections
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
-    if (input$type != "All") {
-      data <- data[data$type == input$type,]
+    if (input$variant != "All") {
+      data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
@@ -75,7 +75,7 @@ server <- function(input, output) {
   }))
   
    output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
+      # generate bins based on input$bins from ui.Rt
       x    <- faithful[, 2] 
       bins <- seq(min(x), max(x), length.out = input$bins + 1)
       
