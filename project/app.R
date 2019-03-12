@@ -17,6 +17,7 @@ vino=read.csv(url,header=TRUE,sep=";")
 vino=vino[,4:dim(vino)[2]]
 # vino <- mice(vino,m=5,maxit=50,meth='pmm',seed=500)
 
+
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
                  # Application title
@@ -37,6 +38,17 @@ ui <- navbarPage("Project",
                                         )
                           )
                  ),
+                 
+                   tabPanel('Vinho Verde k-means clustering',
+                     selectInput('xcol', 'X Variable', names(vino)),
+                     selectInput('ycol', 'Y Variable', names(vino),
+                                 selected=names(vino)[[2]]),
+                     numericInput('clusters', 'Cluster count', 3,
+                                  min = 1, max = 9),
+                   mainPanel(
+                     plotOutput('plot1')
+                   )
+                   ),
                  
                  tabPanel("Data Exploration",
                           
@@ -60,8 +72,8 @@ ui <- navbarPage("Project",
                  tabPanel("Data Visualization",
                           
                           checkboxGroupInput("checkGroup", label = h3("Properties"), 
-                                             choices = c("All",unique(as.character(vino$Taste)),"Clear All"),
-                                             selected = c("All",unique(as.character(vino$Taste)),"Clear All")),
+                                             choices = c("All",unique(as.character(names(vino))),"Clear All"),
+                                             selected = c("All",unique(as.character(names(vino))),"Clear All")),
                           
                           
                           hr(),
@@ -92,6 +104,43 @@ server <- function(input, output) {
   }))
   
   output$property <- renderPrint({ input$checkGroup })
+
+  # output$property <- renderPlot({
+  #  data <- vino
+  #  if (input$Taste == "All") {
+  #    # draw the histogram with the specified number of bins
+  #    hist(data[], col = 'darkgray', border = 'white')
+  #  }
+  #  if (input$Taste != "All") {
+  #    data <- data[data$Taste == input$Taste,]
+  #    # draw the histogram with the specified number of bins
+  #    hist(data, col = 'darkgray', border = 'white')
+  #   }
+  # 
+  # 
+  # })
+  
+  
+  # Combine the selected variables into a new data frame
+  selectedData <- reactive({
+    vino[, c(input$xcol, input$ycol)]
+  })
+  
+  clusters <- reactive({
+    kmeans(selectedData(), input$clusters)
+  })
+  
+  output$plot1 <- renderPlot({
+    palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+              "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+    
+    par(mar = c(5.1, 4.1, 0, 1))
+    plot(selectedData(),
+         col = clusters()$cluster,
+         pch = 20, cex = 3)
+    points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+  })
+  
   
   
   output$distPlot <- renderPlot({
