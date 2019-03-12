@@ -8,9 +8,14 @@
 #
 
 library(shiny)
+library(DT)
+library(mice)
+
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
 vino=read.csv(url,header=TRUE,sep=";")
+vino=vino[,4:dim(vino)[2]]
+# vino <- mice(vino,m=5,maxit=50,meth='pmm',seed=500)
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -50,6 +55,18 @@ ui <- navbarPage("Project",
                                                animate = T, dragRange = T)),
                             # Create a new row for the table.
                             DT::dataTableOutput("table"))
+                 ),
+                 
+                 tabPanel("Data Visualization",
+                          
+                          checkboxGroupInput("checkGroup", label = h3("Properties"), 
+                                             choices = c("All",unique(as.character(vino$Taste)),"Clear All"),
+                                             selected = c("All",unique(as.character(vino$Taste)),"Clear All")),
+                          
+                          
+                          hr(),
+                          fluidRow(column(3, verbatimTextOutput("property")))
+                          
                  )
 )
 
@@ -73,6 +90,9 @@ server <- function(input, output) {
     data
     
   }))
+  
+  output$property <- renderPrint({ input$checkGroup })
+  
   
   output$distPlot <- renderPlot({
     # generate bins based on input$bins from ui.Rt
