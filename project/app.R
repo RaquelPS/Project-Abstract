@@ -8,17 +8,9 @@
 #
 
 library(shiny)
+url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Description.docx"
 
-
-url1<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
-red.vino<-read.csv(url1, sep = ";")
-red.vino$type=rep("red", each=nrow(red.vino))
-
-url2<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
-white.vino<-read.csv(url2, sep = ";")
-white.vino$type=rep("white", each=nrow(white.vino))
-
-merged.vino=rbind(red.vino,white.vino)
+vino=read.csv(url,sep=";")
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -47,14 +39,14 @@ ui <- navbarPage("Project",
                               fluidRow(
                                 column(4,
                                        selectInput("type","Type:",
-                                                   c("All",unique(as.character(merged.vino$type))))),
+                                                   c("All",unique(as.character(vino$type))))),
                                 column(4,
-                                       sliderInput("alcohol", label = ("Alcohol Content"), min = min(merged.vino$alcohol),
-                                                   max = max(merged.vino$alcohol), step = 0.1, value = c(10,12),
+                                       sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                                                   max = max(vino$alcohol), step = 0.1, value = c(10,12),
                                                    animate = T, dragRange = T)),
                                 column(4,
-                                       sliderInput("quality", label = ("Quality"), min = min(merged.vino$quality),
-                                                   max = max(merged.vino$quality), step = 0.1, value = c(5,5),
+                                       sliderInput("quality", label = ("Quality"), min = min(vino$quality),
+                                                   max = max(vino$quality), step = 0.1, value = c(5,5),
                                                    animate = T, dragRange = T)),
                                 # Create a new row for the table.
                                 DT::dataTableOutput("table"))
@@ -67,7 +59,7 @@ server <- function(input, output) {
    
   # Filter data based on selections
   output$table <- DT::renderDataTable(DT::datatable({
-    data <- merged.vino
+    data <- vino
     if (input$type != "All") {
       data <- data[data$type == input$type,]
     }
