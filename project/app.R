@@ -8,17 +8,18 @@
 #
 
 library(shiny)
+library(DT)
+library(mice)
+library(ggpubr)
+library(ggplot2)
 
 
-url1<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
-red.vino<-read.csv(url1, sep = ";")
-red.vino$type=rep("red", each=nrow(red.vino))
 
-url2<-"https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
-white.vino<-read.csv(url2, sep = ";")
-white.vino$type=rep("white", each=nrow(white.vino))
+url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
-merged.vino=rbind(red.vino,white.vino)
+vino=read.csv(url,header=TRUE,sep=";")
+vino=vino[,4:dim(vino)[2]]
+vino=na.omit(vino)
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -27,49 +28,79 @@ ui <- navbarPage("Project",
                           
                           # Sidebar with a slider input for number of bins 
                           sidebarLayout(position="right",
-                            sidebarPanel(
-                              #actionButton("download", "Download the data set"),
-                              sliderInput("bins",
-                                          "Number of bins:",
-                                          min = 1,
-                                          max = 50,
-                                          value = 30)),
-                            # Show a plot of the generated distribution
-                            mainPanel(
-                              plotOutput("distPlot")
-                              )
+                                        sidebarPanel(
+                                          #actionButton("download", "Download the data set"),
+                                          sliderInput("bins",
+                                                      "Number of bins:",
+                                                      min = 1,
+                                                      max = 50,
+                                                      value = 30)),
+                                        # Show a plot of the generated distribution
+                                        mainPanel(
+                                          plotOutput("distPlot")
+                                        )
+                          )
+                 ),
+                 
+                 tabPanel("Correlation between two variables",
+                          
+                          selectInput('xcol1', label = 'X Variable', choices = names(vino)),
+                          selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
+                          
+                          mainPanel(
+                            plotOutput('plot2')
+                            )
+                          ),
+                 
+                 tabPanel('Vinho Verde k-means clustering',
+                          selectInput('xcol', 'X Variable', names(vino)),
+                          selectInput('ycol', 'Y Variable', names(vino)),
+                          numericInput('clusters', 'Cluster count', 3, min = 1, max = 9),
+                          mainPanel(
+                            plotOutput('plot1')
                             )
                           ),
                  
                  tabPanel("Data Exploration",
                           
-                          
-                              fluidRow(
-                                column(4,
-                                       selectInput("type","Type:",
-                                                   c("All",unique(as.character(merged.vino$type))))),
-                                column(4,
-                                       sliderInput("alcohol", label = ("Alcohol Content"), min = min(merged.vino$alcohol),
-                                                   max = max(merged.vino$alcohol), step = 0.1, value = c(10,12),
-                                                   animate = T, dragRange = T)),
-                                column(4,
-                                       sliderInput("quality", label = ("Quality"), min = min(merged.vino$quality),
-                                                   max = max(merged.vino$quality), step = 0.1, value = c(5,8),
-                                                   animate = T, dragRange = T)),
-                                # Create a new row for the table.
-                                DT::dataTableOutput("table"))
+                          fluidRow(
+                            column(4,
+                                   selectInput("variant","Variant:",
+                                               c("All",unique(as.character(vino$Variant))))),
+                            column(4,
+                                   sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                                               max = max(vino$alcohol), step = 0.1, value = c(10,12),
+                                               animate = T, dragRange = T)),
+                            column(4,
+                                   sliderInput("quality", label = ("Quality"), min = min(vino$quality),
+                                               max = max(vino$quality), step = 0.1, value = c(5,8),
+                                               animate = T, dragRange = T)),
+                            # Create a new row for the table.
+                            DT::dataTableOutput("table")
                           )
+                 ),
+                 
+                 tabPanel("Data Visualization",
+                          
+                          checkboxGroupInput("checkGroup", label = h3("Properties"), 
+                                             choices = c("All",unique(as.character(names(vino))),"Clear All"),
+                                             selected = c("All",unique(as.character(names(vino))),"Clear All")),
+                          
+                          hr(),
+                          fluidRow(column(3, verbatimTextOutput("property")))
+                          
                  )
-      
+)
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   
+  
   # Filter data based on selections
   output$table <- DT::renderDataTable(DT::datatable({
-    data <- merged.vino
-    if (input$type != "All") {
-      data <- data[data$type == input$type,]
+    data <- vino
+    if (input$variant != "All") {
+      data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
@@ -79,19 +110,73 @@ server <- function(input, output) {
     data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
     
     data
-      
+    
   }))
   
-   output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      bins <- seq(min(x), max(x), length.out = input$bins + 1)
-      
-      # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
-   })
+  output$property <- renderPrint({ input$checkGroup })
+  
+  # output$property <- renderPlot({
+  #  data <- vino
+  #  if (input$Taste == "All") {
+  #    # draw the histogram with the specified number of bins
+  #    hist(data[], col = 'darkgray', border = 'white')
+  #  }
+  #  if (input$Taste != "All") {
+  #    data <- data[data$Taste == input$Taste,]
+  #    # draw the histogram with the specified number of bins
+  #    hist(data, col = 'darkgray', border = 'white')
+  #   }
+  # 
+  # 
+  # })
+  
+  
+  # Combine the selected variables into a new data frame
+  
+  output$plot1 <- renderPlot({
+    
+    selectedData <- reactive({
+      vino[, c(input$xcol, input$ycol)]
+    })
+    
+    clusters <- reactive({
+      kmeans(selectedData(), input$clusters)
+    })
+    palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+              "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+    
+    par(mar = c(5.1, 4.1, 0, 1))
+    plot(selectedData(),
+         col = clusters()$cluster,
+         pch = 20, cex = 0.5)
+    points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+  })
+  
+  
+  # Combine the selected variables into a new data frame
+  
+  output$plot2 <- renderPlot({
+    
+    # ggscatter(data = vino, x = x, y = y, 
+    #           add = "reg.line", conf.int = TRUE, 
+    #           cor.coef = TRUE, cor.method = "pearson",
+    #           color = "blue", size = 0.5,
+    #           xlab = "input$xcol", ylab = "input$ycol")
+    ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
+      geom_point(size=2, shape=23)+
+      geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
+  })
+  
+  
+  output$distPlot <- renderPlot({
+    # generate bins based on input$bins from ui.Rt
+    x    <- faithful[, 2] 
+    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    
+    # draw the histogram with the specified number of bins
+    hist(x, breaks = bins, col = 'darkgray', border = 'white')
+  })
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
