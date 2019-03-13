@@ -54,7 +54,7 @@ ui <- navbarPage("Project",
                                                    animate = T, dragRange = T)),
                                 column(4,
                                        sliderInput("quality", label = ("Quality"), min = min(merged.vino$quality),
-                                                   max = max(merged.vino$quality), step = 0.1, value = c(5,5),
+                                                   max = max(merged.vino$quality), step = 0.1, value = c(5,8),
                                                    animate = T, dragRange = T)),
                                 # Create a new row for the table.
                                 DT::dataTableOutput("table"))
