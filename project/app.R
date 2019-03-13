@@ -10,8 +10,8 @@
 library(shiny)
 library(DT)
 library(mice)
-library(ggpubr)
 library(ggplot2)
+library(dplyr)
 
 
 
@@ -49,6 +49,24 @@ ui <- navbarPage("Project",
                           
                           mainPanel(
                             plotOutput('plot2')
+                            )
+                          ),
+                 
+                 tabPanel("Pie Chart-Variant",
+                          
+                          selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
+
+                          mainPanel(
+                            plotOutput('plot3')
+                            )
+                          ),
+                 
+                 tabPanel("Pie Chart-Taste",
+                          
+                          selectInput('taste.pie', label = 'Taste', choices = names(vino)),
+                          
+                          mainPanel(
+                            plotOutput('plot4')
                             )
                           ),
                  
@@ -152,19 +170,32 @@ server <- function(input, output) {
     points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
   })
   
-  
-  # Combine the selected variables into a new data frame
-  
+
+  #Correlation plot
   output$plot2 <- renderPlot({
     
-    # ggscatter(data = vino, x = x, y = y, 
-    #           add = "reg.line", conf.int = TRUE, 
-    #           cor.coef = TRUE, cor.method = "pearson",
-    #           color = "blue", size = 0.5,
-    #           xlab = "input$xcol", ylab = "input$ycol")
     ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
+  })
+  
+  
+  #Piechart variant
+  output$plot3 <- renderPlot({
+    
+    ggplot(vino, aes(x="", y=input$variant.pie, fill=vino$Taste))+
+      geom_bar(width = 1, stat = "identity")+
+      coord_polar("y", start=0)
+
+  })
+  
+  #Piechart taste
+  output$plot4 <- renderPlot({
+    
+    ggplot(vino, aes(x="", y=input$taste.pie, fill=vino$Taste))+
+      geom_bar(width = 1, stat = "identity")+
+      coord_polar("y", start=0)
+    
   })
   
   
