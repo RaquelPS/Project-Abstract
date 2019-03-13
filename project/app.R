@@ -16,6 +16,13 @@ url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerde
 vino=read.csv(url,header=TRUE,sep=";")
 vino=vino[,4:dim(vino)[2]]
 vino=na.omit(vino)
+scale_vino=vino
+for(i in 1:dim(vino)[2]){
+  #i=1
+  if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
+}
+  
+  scale(vino[,1:12],scale=T)
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -103,15 +110,15 @@ server <- function(input, output) {
   # Reactive value for selected dataset ----
   datasetInput <- reactive({
     data <- vino
-    # if (input$variant != "All") {
-    #   data <- data[data$Variant == input$variant,]
-    # }
-    # 
-    # #Choose the correct alcohol interval
-    # data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
-    # 
-    # #Choose the correct quality interval
-    # data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
+    if (input$variant != "All") {
+      data <- data[data$Variant == input$variant,]
+    }
+    
+    #Choose the correct alcohol interval
+    data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
+    
+    #Choose the correct quality interval
+    data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
     data
   })
   
@@ -133,6 +140,10 @@ server <- function(input, output) {
     
     #Choose the correct quality interval
     data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
+    
+    # if(input$checkgroup != "All"){
+    #   data=data[which(data$Taste == input$checkgroup),]
+    # }
     
     data
     
@@ -203,7 +214,7 @@ server <- function(input, output) {
       # #Choose the correct quality interval
       # data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
       # 
-      # paste(input$data, ".csv", sep = "")
+      paste(input$data, ".csv", sep = "")
     },
     content = function(file) {
       write.csv(datasetInput(), file, row.names = TRUE)
