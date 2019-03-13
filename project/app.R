@@ -15,8 +15,7 @@ url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerde
 
 vino=read.csv(url,header=TRUE,sep=";")
 vino=vino[,4:dim(vino)[2]]
-# vino <- mice(vino,m=5,maxit=50,meth='pmm',seed=500)
-
+vino=na.omit(vino)
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -52,22 +51,33 @@ ui <- navbarPage("Project",
                  
                  tabPanel("Data Exploration",
                           
-                          
-                          fluidRow(
-                            column(4,
-                                   selectInput("variant","Variant:",
-                                               c("All",unique(as.character(vino$Variant))))),
-                            column(4,
-                                   sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                          sidebarLayout(position="left",
+                                        sidebarPanel(
+                                          
+                            
+                            selectInput("variant","Variant:",
+                                               c("All",unique(as.character(vino$Variant)))),
+                            
+                            sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
                                                max = max(vino$alcohol), step = 0.1, value = c(10,12),
-                                               animate = T, dragRange = T)),
-                            column(4,
-                                   sliderInput("quality", label = ("Quality"), min = min(vino$quality),
+                                               animate = T, dragRange = T),
+                            
+                            sliderInput("quality", label = ("Quality:"), min = min(vino$quality),
                                                max = max(vino$quality), step = 0.1, value = c(5,8),
-                                               animate = T, dragRange = T)),
-                            # Create a new row for the table.
-                            DT::dataTableOutput("table"))
-                 ),
+                                               animate = T, dragRange = T),
+
+                            checkboxGroupInput("checkGroup2", label = ("Taste:"),
+                                               choices = c("All",unique(as.character(vino$Taste)),"Clear All"),
+                                               selected = c("All",unique(as.character(vino$Taste)),"Clear All")),
+                            hr(),
+                            fluidRow(column(3, verbatimTextOutput("taste")))),
+                            mainPanel(
+                              # Create a new row for the table.
+                              DT::dataTableOutput("table")
+                              #tableOutput("table")
+                              )
+                            )),
+                            
                  
                  tabPanel("Data Visualization",
                           
@@ -78,8 +88,7 @@ ui <- navbarPage("Project",
                           
                           hr(),
                           fluidRow(column(3, verbatimTextOutput("property")))
-                          
-                 )
+                          )
 )
 
 
@@ -87,7 +96,7 @@ ui <- navbarPage("Project",
 server <- function(input, output) {
   
   # Filter data based on selections
-  output$table <- DT::renderDataTable(DT::datatable({
+  output$table <- renderTable(table({
     data <- vino
     if (input$variant != "All") {
       data <- data[data$Variant == input$variant,]
@@ -104,7 +113,9 @@ server <- function(input, output) {
   }))
   
   output$property <- renderPrint({ input$checkGroup })
-
+  
+  output$taste <- renderPrint({ input$checkGroup2 })
+  
   # output$property <- renderPlot({
   #  data <- vino
   #  if (input$Taste == "All") {
