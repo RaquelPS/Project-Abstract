@@ -69,14 +69,19 @@ ui <- navbarPage("Project",
                             checkboxGroupInput("checkGroup2", label = ("Taste:"),
                                                choices = c("All",unique(as.character(vino$Taste)),"Clear All"),
                                                selected = c("All",unique(as.character(vino$Taste)),"Clear All")),
-                            hr(),
-                            fluidRow(column(3, verbatimTextOutput("taste")))),
+                            # Download Button
+                            downloadButton("downloadData", "Download")
+                            
+                            ),
+                            
                             mainPanel(
+                              hr(),
+                              fluidRow(column(3, verbatimTextOutput("taste"))),
                               # Create a new row for the table.
                               DT::dataTableOutput("table")
                               #tableOutput("table")
                               )
-                            )),
+                            ),
                             
                  
                  tabPanel("Data Visualization",
@@ -90,13 +95,34 @@ ui <- navbarPage("Project",
                           fluidRow(column(3, verbatimTextOutput("property")))
                           )
 )
-
+)
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  # Reactive value for selected dataset ----
+  datasetInput <- reactive({
+    data <- vino
+    # if (input$variant != "All") {
+    #   data <- data[data$Variant == input$variant,]
+    # }
+    # 
+    # #Choose the correct alcohol interval
+    # data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
+    # 
+    # #Choose the correct quality interval
+    # data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
+    data
+  })
+  
+  # Table of selected dataset ----
+  output$table <- renderTable({
+    datasetInput()
+  })
+  
+  
   # Filter data based on selections
-  output$table <- renderTable(table({
+  output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
       data <- data[data$Variant == input$variant,]
@@ -162,6 +188,27 @@ server <- function(input, output) {
     # draw the histogram with the specified number of bins
     hist(x, breaks = bins, col = 'darkgray', border = 'white')
   })
+  
+  # Downloadable csv of selected dataset ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      # data <- vino
+      # if (input$variant != "All") {
+      #   data <- data[data$Variant == input$variant,]
+      # }
+      # 
+      # #Choose the correct alcohol interval
+      # data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
+      # 
+      # #Choose the correct quality interval
+      # data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
+      # 
+      # paste(input$data, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = TRUE)
+    }
+  )
 }
 
 # Run the application 
