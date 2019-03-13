@@ -12,7 +12,7 @@ library(DT)
 library(mice)
 library(ggplot2)
 library(dplyr)
-
+library(scales)
 
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
@@ -61,9 +61,9 @@ ui <- navbarPage("Project",
                             )
                           ),
                  
-                 tabPanel("Pie Chart-Taste",
+                 tabPanel("Pie Chart-Quality",
                           
-                          selectInput('taste.pie', label = 'Taste', choices = names(vino)),
+                          selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
                           
                           mainPanel(
                             plotOutput('plot4')
@@ -183,18 +183,92 @@ server <- function(input, output) {
   #Piechart variant
   output$plot3 <- renderPlot({
     
-    ggplot(vino, aes(x="", y=input$variant.pie, fill=vino$Taste))+
-      geom_bar(width = 1, stat = "identity")+
-      coord_polar("y", start=0)
+    if (input$variant.pie=="red"){
+      
+      x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="red")
+      x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="red")
+      x3=sum((vino$Taste)=="Low acid" & (vino$Variant)=="red")
+      x4=sum((vino$Taste)=="Sweet" & (vino$Variant)=="red")
+      x5=sum((vino$Taste)=="Very low acid" & (vino$Variant)=="red")
+      total.red=sum((vino$Variant)=="red")
+      value = c(x1,x2,x3,x4,x5)/total.red
+      
+      df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
+                       value = c(x1,x2,x3,x4,x5)/total.red)
+      ggplot(df, aes(x="", y=value, fill=Taste))+
+        geom_bar(width = 1, stat = "identity")+
+        coord_polar("y", start=0)+
+        geom_text(aes(y = value), 
+                      label = percent(value), size=3) 
+      
+    }else if (input$variant.pie=="white"){
+      
+      x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="white")
+      x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="white")
+      x3=sum((vino$Taste)=="Low acid" & (vino$Variant)=="white")
+      x4=sum((vino$Taste)=="Sweet" & (vino$Variant)=="white")
+      x5=sum((vino$Taste)=="Very low acid" & (vino$Variant)=="white")
+      total.white=sum((vino$Variant)=="white")
+      value = c(x1,x2,x3,x4,x5)/total.white
+      
+      df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
+                       value = c(x1,x2,x3,x4,x5)/total.white)
+      ggplot(df, aes(x="", y=value, fill=Taste))+
+        geom_bar(width = 1, stat = "identity")+
+        coord_polar("y", start=0)+
+        geom_text(aes(y = value), 
+                  label = percent(value), size=3) 
+      
+      }
 
   })
   
-  #Piechart taste
+  #Piechart quality
   output$plot4 <- renderPlot({
     
-    ggplot(vino, aes(x="", y=input$taste.pie, fill=vino$Taste))+
-      geom_bar(width = 1, stat = "identity")+
-      coord_polar("y", start=0)
+    if (input$quality.pie=="red"){
+      
+      x3=sum((vino$quality)==3 & (vino$Variant)=="red")
+      x4=sum((vino$quality)==4 & (vino$Variant)=="red")
+      x5=sum((vino$quality)==5 & (vino$Variant)=="red")
+      x6=sum((vino$quality)==6 & (vino$Variant)=="red")
+      x7=sum((vino$quality)==7 & (vino$Variant)=="red")
+      x8=sum((vino$quality)==8 & (vino$Variant)=="red")
+      x9=sum((vino$quality)==9 & (vino$Variant)=="red")
+      total.red=sum((vino$Variant)=="red")
+      value = c(x3,x4,x5,x6,x7,x8,x9)/total.red
+      
+      df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", "Quality=6", 
+                                 "Quality=7","Quality=8","Quality=9"),
+                       value = c(x3,x4,x5,x6,x7,x8,x9)/total.red)
+      ggplot(df, aes(x="", y=value, fill=Quality))+
+        geom_bar(width = 1, stat = "identity")+
+        coord_polar("y", start=0)+
+        geom_text(aes(y = value), 
+                  label = percent(value), size=3) 
+      
+    }else if (input$quality.pie=="white"){
+      
+      x3=sum((vino$quality)==3 & (vino$Variant)=="white")
+      x4=sum((vino$quality)==4 & (vino$Variant)=="white")
+      x5=sum((vino$quality)==5 & (vino$Variant)=="white")
+      x6=sum((vino$quality)==6 & (vino$Variant)=="white")
+      x7=sum((vino$quality)==7 & (vino$Variant)=="white")
+      x8=sum((vino$quality)==8 & (vino$Variant)=="white")
+      x9=sum((vino$quality)==9 & (vino$Variant)=="white")
+      total.white=sum((vino$Variant)=="white")
+      value = c(x3,x4,x5,x6,x7,x8,x9)/total.white
+      
+      df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", "Quality=6", 
+                                   "Quality=7","Quality=8","Quality=9"),
+                       value = c(x3,x4,x5,x6,x7,x8,x9)/total.white)
+      ggplot(df, aes(x="", y=value, fill=Quality))+
+        geom_bar(width = 1, stat = "identity")+
+        coord_polar("y", start=0)+
+        geom_text(aes(y = value), 
+                  label = percent(value), size=3) 
+      
+    }
     
   })
   
