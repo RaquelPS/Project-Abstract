@@ -7,9 +7,24 @@
 #    http://shiny.rstudio.com/
 #
 
+# install.packages("devtools")
+# install.packages("Rcpp")
+# install_github('ramnathv/rCharts', force= TRUE)
+# install_github('rCharts', 'ramnathv')
+# install.packages("shinyjs")
+
+
 library(shiny)
 library(DT)
 library(mice)
+library(BH)
+library(devtools)
+library(Rcpp)
+library(rCharts)
+require(markdown)
+require(data.table)
+library(dplyr)
+# library(shinyjs)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -18,94 +33,97 @@ vino=vino[,4:dim(vino)[2]]
 vino=na.omit(vino)
 scale_vino=vino
 for(i in 1:dim(vino)[2]){
-  #i=1
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
 }
   
-  scale(vino[,1:12],scale=T)
 
 # Define UI for application that draws a histogram
-ui <- navbarPage("Project",
-                 # Application title
-                 tabPanel("Old Faithful Geyser Data",
-                          
-                          # Sidebar with a slider input for number of bins 
-                          sidebarLayout(position="right",
-                                        sidebarPanel(
-                                          #actionButton("download", "Download the data set"),
-                                          sliderInput("bins",
-                                                      "Number of bins:",
-                                                      min = 1,
-                                                      max = 50,
-                                                      value = 30)),
-                                        # Show a plot of the generated distribution
-                                        mainPanel(
-                                          plotOutput("distPlot")
-                                        )
-                          )
-                 ),
+ui <- navbarPage("Vinho Verde Wine EXPLORER",
+                 # # Application title
+                 # tabPanel("Old Faithful Geyser Data",
+                 #          
+                 #          # Sidebar with a slider input for number of bins 
+                 #          sidebarLayout(position="right",
+                 #                        sidebarPanel(
+                 #                          #actionButton("download", "Download the data set"),
+                 #                          sliderInput("bins",
+                 #                                      "Number of bins:",
+                 #                                      min = 1,
+                 #                                      max = 50,
+                 #                                      value = 30)),
+                 #                        # Show a plot of the generated distribution
+                 #                        mainPanel(
+                 #                          plotOutput("distPlot")
+                 #                        )
+                 # 
+                 #                                              )
+                 # ),
                  
-                   tabPanel('Vinho Verde k-means clustering',
+                 tabPanel('Vinho Verde k-means clustering',
                      selectInput('xcol', 'X Variable', names(vino)),
                      selectInput('ycol', 'Y Variable', names(vino),
                                  selected=names(vino)[[2]]),
                      numericInput('clusters', 'Cluster count', 3,
                                   min = 1, max = 9),
                    mainPanel(
-                     plotOutput('plot1')
-                   )
+                     plotOutput('plot1'))
                    ),
                  
                  tabPanel("Data Exploration",
-                          
-                          sidebarLayout(position="left",
-                                        sidebarPanel(
-                                          
-                            
-                            selectInput("variant","Variant:",
-                                               c("All",unique(as.character(vino$Variant)))),
-                            
-                            sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
-                                               max = max(vino$alcohol), step = 0.1, value = c(10,12),
-                                               animate = T, dragRange = T),
-                            
-                            sliderInput("quality", label = ("Quality:"), min = min(vino$quality),
-                                               max = max(vino$quality), step = 0.1, value = c(5,8),
-                                               animate = T, dragRange = T),
+                      sidebarLayout(position="left",
+                            sidebarPanel(
+                                selectInput("variant","Variant:",
+                                      c("All",unique(as.character(vino$Variant)))),
+                                sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                                      max = max(vino$alcohol), step = 0.1, value = c(10,12),
+                                      animate = T, dragRange = T),
+                                sliderInput("quality", label = ("Quality:"), min = min(vino$quality),
+                                      max = max(vino$quality), step = 0.1, value = c(5,8),
+                                      animate = T, dragRange = T),
 
-                            checkboxGroupInput("checkGroup2", label = ("Taste:"),
-                                               choices = c("All",unique(as.character(vino$Taste)),"Clear All"),
-                                               selected = c("All",unique(as.character(vino$Taste)),"Clear All")),
+                                checkboxGroupInput("checkGroup2", label = ("Taste:"),
+                                      choices = c(unique(as.character(vino$Taste))),
+                                      selected = c(unique(as.character(vino$Taste)))),
                             # Download Button
-                            downloadButton("downloadData", "Download")
+                            downloadButton("downloadData", "Download Selection"),
+                            downloadButton("downloadData2", "Download Dataset"),
                             
-                            ),
                             
-                            mainPanel(
-                              hr(),
-                              fluidRow(column(3, verbatimTextOutput("taste"))),
-                              # Create a new row for the table.
-                              DT::dataTableOutput("table")
-                              #tableOutput("table")
-                              )
-                            ),
-                            
+                            actionButton(inputId = "clearAllBottom",
+                                         label = "Clear selection",
+                                         icon = icon("square-o")),
+                            actionButton(inputId = "selectAllBottom",
+                                         label = "Select all",
+                                         icon = icon("check-square-o")),
+                            uiOutput("tasteControl")
+                          ),
+                      
+                      mainPanel(
+                        verbatimTextOutput("taste"),
+                        # Create a new row for the table.
+                        DT::dataTableOutput("table")
+                        #tableOutput("table")
+                      )
+                    )
+                  ),
                  
                  tabPanel("Data Visualization",
                           
                           checkboxGroupInput("checkGroup", label = h3("Properties"), 
                                              choices = c("All",unique(as.character(names(vino))),"Clear All"),
                                              selected = c("All",unique(as.character(names(vino))),"Clear All")),
-                          
-                          
-                          hr(),
-                          fluidRow(column(3, verbatimTextOutput("property")))
+                          verbatimTextOutput("property")
                           )
-)
-)
+          )
+
+
+#############################################################################################################
+#############################################################################################################
+#############################################################################################################
+
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output,session) {
   
   # Reactive value for selected dataset ----
   datasetInput <- reactive({
@@ -144,14 +162,84 @@ server <- function(input, output) {
     # if(input$checkgroup != "All"){
     #   data=data[which(data$Taste == input$checkgroup),]
     # }
-    
+
     data
     
   }))
   
-  output$property <- renderPrint({ input$checkGroup })
+  # # Initialize reactive values
+  # taste <- sort(unique(data$Taste))
+  # values <- reactiveValues()
+  # values$taste <- taste
+  # 
+  # 
+  # observe({
+  #   if(input$selectAllTop > 0) {
+  #     updateCheckboxGroupInput(session=session, inputId="taste",
+  #                              choices=taste, selected=taste)
+  #     values$taste <- taste
+  #   }
+  # })
+  # observe({
+  #   if(input$clearAllBottom > 0) {
+  #     updateCheckboxGroupInput(session=session, inputId="taste",
+  #                              choices=taste, selected=taste)
+  #     values$taste <- taste
+  #   }
+  # })
+  # 
+  # observe({
+  #   if(input$clearAllTop > 0) {
+  #     updateCheckboxGroupInput(session=session, inputId="taste",
+  #                              choices=taste, selected=NULL)
+  #     values$taste <- c()
+  #   }
+  # })
+  # observe({
+  #   if(input$clearAllBottom > 0) {
+  #     updateCheckboxGroupInput(session=session, inputId="taste",
+  #                              choices=taste, selected=NULL)
+  #     values$taste <- c()
+  #   }
+  # })
+
   
-  output$taste <- renderPrint({ input$checkGroup2 })
+  # Event type checkbox
+  # output$tasteControl <- renderUI({
+  #   checkboxGroupInput('taste', 'Taste:',
+  #                      taste, selected = values$taste)
+  # })
+  
+  observe({
+    x <- input$selectAllButton
+    
+    # Can use character(0) to remove all choices
+    if (is.null(x))
+      x <- character(0)
+    
+    # Can also set the label and select items
+    updateCheckboxGroupInput(session, "CheckboxGroup2",
+                             # label = paste("Checkboxgroup label", length(x)),
+                             choices = c(unique(as.character(vino$Taste))),
+                             selected = c(unique(as.character(vino$Taste)))
+    )
+  })
+  
+  observe({
+    x <- input$clearAllButton
+    
+    # Can use character(0) to remove all choices
+    if (is.null(x)==F)
+      updateCheckboxGroupInput(session, "CheckboxGroup2",
+                             label = paste("Checkboxgroup label", length(x)),
+                             choices = c(unique(as.character(vino$Taste))),
+                             selected = NULL
+    )
+  })
+  
+    output$property <- renderPrint({input$checkGroup})
+  
+  output$taste <- renderPrint({input$checkGroup2})
   
   # output$property <- renderPlot({
   #  data <- vino
@@ -191,16 +279,18 @@ server <- function(input, output) {
   
   
   
-  output$distPlot <- renderPlot({
-    # generate bins based on input$bins from ui.Rt
-    x    <- faithful[, 2] 
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white')
-  })
+  # output$distPlot <- renderPlot({
+  #   # generate bins based on input$bins from ui.Rt
+  #   x    <- faithful[, 2] 
+  #   bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  #   
+  #   # draw the histogram with the specified number of bins
+  #   hist(x, breaks = bins, col = 'darkgray', border = 'white')
+  # })
   
   # Downloadable csv of selected dataset ----
+  
+  #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
       # data <- vino
@@ -215,6 +305,15 @@ server <- function(input, output) {
       # data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
       # 
       paste(input$data, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = TRUE)
+    }
+  )
+  #Full data download
+  output$downloadData2 <- downloadHandler(
+    filename = function() {
+      paste(vino, ".csv", sep = "")
     },
     content = function(file) {
       write.csv(datasetInput(), file, row.names = TRUE)
