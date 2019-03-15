@@ -307,7 +307,7 @@ output$distPlot <- renderPlot({
 })
 
 # Run the application 
-shinyApp(ui = ui, server = server)
+#shinyApp(ui = ui, server = server)
   
   
   output$property <- renderPrint({input$checkGroup})
@@ -383,3 +383,4 @@ shinyApp(ui = ui, server = server)
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
