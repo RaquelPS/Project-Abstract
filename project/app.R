@@ -13,6 +13,7 @@ library(mice)
 library(ggplot2)
 library(dplyr)
 library(scales)
+library(tidyverse)
 
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
@@ -23,7 +24,7 @@ vino=vino %>%select(-starts_with("X"))
 # vino=vino %>% select('fixed.acidity','volatile.acidity',"citric.acid","residual.sugar","chlorides",
 #                      "free.sulfur.dioxide","total.sulfur.dioxide","density","pH",
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
-vino=vino %>%  na.omit()
+vino=vino %>%  drop_na()
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Project",
@@ -52,7 +53,7 @@ ui <- navbarPage("Project",
                           selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
                           
                           mainPanel(
-                            plotOutput('plot2')
+                            plotlyOutput('plot2')
                             )
                           ),
                  
@@ -61,7 +62,7 @@ ui <- navbarPage("Project",
                           selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
 
                           mainPanel(
-                            plotOutput('plot3')
+                            plotlyOutput('plot3')
                             )
                           ),
                  
@@ -70,7 +71,7 @@ ui <- navbarPage("Project",
                           selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
                           
                           mainPanel(
-                            plotOutput('plot4')
+                            plotlyOutput('plot4')
                             )
                           ),
                  
@@ -181,16 +182,17 @@ server <- function(input, output) {
   
 
   #Correlation plot
-  output$plot2 <- renderPlot({
+  output$plot2 <- renderPlotly({
     
-    ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
+    p=ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
+    ggplotly(p)
   })
   
   
   #Piechart variant
-  output$plot3 <- renderPlot({
+  output$plot3 <- renderPlotly({
     
     if (input$variant.pie=="red"){
       
@@ -210,11 +212,16 @@ server <- function(input, output) {
       
       df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
                        value = c(x1,x2,x3,x4,x5)/total.red)
-      ggplot(df, aes(x="", y=value, fill=Taste))+
-        geom_bar(width = 1, stat = "identity")+
-        coord_polar("y", start=0)+
-        geom_text(aes(y = value), 
-                      label = percent(value), size=3) 
+      # ggplot(df, aes(x="", y=value, fill=Taste))+
+      #   geom_bar(width = 1, stat = "identity")+
+      #   coord_polar("y", start=0)+
+      #   geom_text(aes(y = value), 
+      #                 label = percent(value), size=3) 
+      
+      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie') %>%
+        layout(title = 'Percentage of each vino taste within the red variant',
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
     }else if (input$variant.pie=="white"){
       
@@ -235,18 +242,23 @@ server <- function(input, output) {
       
       df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
                        value = c(x1,x2,x3,x4,x5)/total.white)
-      ggplot(df, aes(x="", y=value, fill=Taste))+
-        geom_bar(width = 1, stat = "identity")+
-        coord_polar("y", start=0)+
-        geom_text(aes(y = value), 
-                  label = percent(value), size=3) 
+      # ggplot(df, aes(x="", y=value, fill=Taste))+
+      #   geom_bar(width = 1, stat = "identity")+
+      #   coord_polar("y", start=0)+
+      #   geom_text(aes(y = value), 
+      #             label = percent(value), size=3) 
+      
+      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie') %>%
+        layout(title = 'Percentage of each vino taste within the white variant',
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
       }
 
   })
   
   #Piechart quality
-  output$plot4 <- renderPlot({
+  output$plot4 <- renderPlotly({
     
     if (input$quality.pie=="red"){
       
@@ -272,11 +284,17 @@ server <- function(input, output) {
       df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", "Quality=6", 
                                  "Quality=7","Quality=8","Quality=9"),
                        value = c(x3,x4,x5,x6,x7,x8,x9)/total.red)
-      ggplot(df, aes(x="", y=value, fill=Quality))+
-        geom_bar(width = 1, stat = "identity")+
-        coord_polar("y", start=0)+
-        geom_text(aes(y = value), 
-                  label = percent(value), size=3) 
+      
+      # ggplot(df, aes(x="", y=value, fill=Quality))+
+      #   geom_bar(width = 1, stat = "identity")+
+      #   coord_polar("y", start=0)+
+      #   geom_text(aes(y = value), 
+      #             label = percent(value), size=3) 
+      
+      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie') %>%
+        layout(title = 'Percentage of each vino quality within the red variant',
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
     }else if (input$quality.pie=="white"){
       
@@ -302,11 +320,17 @@ server <- function(input, output) {
       df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", "Quality=6", 
                                    "Quality=7","Quality=8","Quality=9"),
                        value = c(x3,x4,x5,x6,x7,x8,x9)/total.white)
-      ggplot(df, aes(x="", y=value, fill=Quality))+
-        geom_bar(width = 1, stat = "identity")+
-        coord_polar("y", start=0)+
-        geom_text(aes(y = value), 
-                  label = percent(value), size=3) 
+      
+      # ggplot(df, aes(x="", y=value, fill=Quality))+
+      #   geom_bar(width = 1, stat = "identity")+
+      #   coord_polar("y", start=0)+
+      #   geom_text(aes(y = value), 
+      #             label = percent(value), size=3) 
+      
+      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie') %>%
+        layout(title = 'Percentage of each vino quality within the white variant',
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
     }
     
