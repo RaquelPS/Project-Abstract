@@ -50,7 +50,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  tabPanel("Correlation between two variables",
                           
                           selectInput('xcol1', label = 'X Variable', choices = names(vino)),
-                          selectInput('ycol1', label = 'Y Variable', choices = names(vino),selected = "volatile.acidity"),
+                          selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
                           
                           mainPanel(
                             plotOutput('plot2')
@@ -87,25 +87,25 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  tabPanel("Data Exploration",
                       sidebarLayout(position="left",
                             sidebarPanel(
-                                selectInput("variant","Variant:",
+                                selectInput("variant","Variant",
                                       c("All",unique(as.character(vino$Variant)))),
                                 sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
                                       max = max(vino$alcohol), step = 0.1, value = c(10,12),
                                       animate = T, dragRange = T),
-                                sliderInput("quality", label = ("Quality:"), min = min(vino$quality),
+                                sliderInput("quality", label = ("Quality"), min = min(vino$quality),
                                       max = max(vino$quality), step = 1, value = c(5,8),
                                       animate = T, dragRange = T),
 
-                                checkboxGroupInput("checkGroup2", label = ("Taste:"),
-                                      choices = c(unique(as.character(vino$Taste))),
-                                      selected = c(unique(as.character(vino$Taste)))),
+                                checkboxGroupInput("checkGroup2", label = ("Taste"),
+                                      choices = c(unique(as.character(vino$Taste)))),
                                 
                                 checkboxInput("all","Select All/None", value=TRUE),
-                            # Download Button
-                            downloadButton("downloadData", "Download Selection"),
-                            downloadButton("downloadData2", "Download Dataset")
-                          ),
-                      
+                                
+                                # Download Button
+                                downloadButton("downloadData", "Download Selection"),
+                                downloadButton("downloadData2", "Download Dataset")
+                                ),
+                            
                       mainPanel(
                         verbatimTextOutput("taste"),
                         # Create a new row for the table.
@@ -141,32 +141,13 @@ server <- function(input, output,session) {
                              selected = if(input$all) unique(as.character(data$Taste)))
   })
   
-  # Reactive value for selected dataset ----
-  datasetInput <- reactive({
-    data <- vino
-    if (input$variant != "All") {
-      data <- data[data$Variant == input$variant,]
-    }
-    
-    #Choose the correct alcohol interval
-    data=data[which(data$alcohol>min(input$alcohol) & data$alcohol<max(input$alcohol)),]
-    
-    #Choose the correct quality interval
-    data=data[which(data$quality>min(input$quality) & data$quality<max(input$quality)),]
-    data
-  })
-  
-  # Table of selected dataset ----
-  output$table <- renderTable({
-    datasetInput()
-  })
-  
   
   # Filter data based on selections
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
-      data <- data[data$Variant == input$variant,]}
+      data <- data[data$Variant == input$variant,]
+    }
     
     #Choose the correct alcohol interval
     data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
