@@ -44,13 +44,44 @@ vino=vino %>%  drop_na()
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
 }
-  
+
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
-                 
-                 tabPanel("Correlation between two variables",
+        tabPanel("Dataset",
+                 useShinyjs(),
+                 sidebarLayout(position="left",
+                               sidebarPanel(
+                                 selectInput("variant","Variant",
+                                             c("All",unique(as.character(vino$Variant)))),
+                                 sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                                             max = max(vino$alcohol), step = 0.1, value = c(10,12),
+                                             animate = T, dragRange = T),
+                                 sliderInput("quality", label = ("Quality"), min = min(vino$quality),
+                                             max = max(vino$quality), step = 1, value = c(5,8),
+                                             animate = T, dragRange = T),
+                                 
+                                 checkboxGroupInput("checkGroup2", label = ("Taste"),
+                                                    choices = c(unique(as.character(vino$Taste)))),
+                                 
+                                 checkboxInput("all","Select All/None", value=TRUE),
+                                 # Download Button
+                                 downloadButton("downloadData", "Download Selection"),
+                                 downloadButton("downloadData2", "Download Dataset")
+                               ),#SIDEBAR PANEL
                           
+<<<<<<< HEAD
+                        mainPanel(
+                              tabsetPanel(type="tabs",
+                                  tabPanel("Exploration", DT::dataTableOutput("table"),verbatimTextOutput("taste")),
+                                  tabPanel("Summary")        
+                                          
+                                  )       
+                        )#MAIN PANEL
+                 )#SIDEBAR LAYOUT
+        ),#TAB PANEL 1
+                          
+=======
                           selectInput('xcol1', label = 'X Variable', choices = names(vino)),
                           selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
                           
@@ -58,19 +89,49 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                             plotlyOutput('plot2')
                           )
                  ),
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
                  
+        
+        tabPanel("Data Visualization",
+                 # checkboxGroupInput("checkGroup", label = h3("Properties"), 
+                 #                    choices = c("All",unique(as.character(names(vino))),"Clear All"),
+                 #                    selected = c("All",unique(as.character(names(vino))),"Clear All")),
+                 # verbatimTextOutput("property")
+                 
+          mainPanel(
+            tabsetPanel(
                  tabPanel("Pie Chart-Variant",
                           
                           selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
+<<<<<<< HEAD
+                          plotlyOutput('plot3')
+=======
                           mainPanel(
                             plotlyOutput('plot3')
                           )
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
                  ),
                  
                  tabPanel("Pie Chart-Quality",
                           
                           selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
+                          plotlyOutput('plot4')
+                 )
+            )#TABSET PANEL
+          )#MAIN PANEL
+        ),#TAB PANEL 2
+        
+        tabPanel("In-Depth Analysis",
+            mainPanel(
+              tabsetPanel(
+                 tabPanel("Correlation between two variables",
                           
+<<<<<<< HEAD
+                          selectInput('xcol1', label = 'X Variable', choices = names(vino)),
+                          selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
+                          plotlyOutput('plot2')
+                          ),
+=======
                           mainPanel(
                             plotlyOutput('plot4')
                           )
@@ -116,15 +177,21 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                       )
                     )
                   ),
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
                  
-                 tabPanel("Data Visualization",
-                          
-                          checkboxGroupInput("checkGroup", label = h3("Properties"), 
-                                             choices = c("All",unique(as.character(names(vino))),"Clear All"),
-                                             selected = c("All",unique(as.character(names(vino))),"Clear All")),
-                          verbatimTextOutput("property")
+                 tabPanel('Vinho Verde k-means clustering',
+                          selectInput('xcol', 'X Variable', names(vino)),
+                          selectInput('ycol', 'Y Variable', names(vino),
+                                      selected=names(vino)[[2]]),
+                          numericInput('clusters', 'Cluster count', 3,
+                                       min = 1, max = 9),
+                          plotOutput('plot1')
                           )
-          )
+                 )#TABSET PANEL
+            )#MAIN PANEL
+        )#TABPANEL 3
+
+)#UI
 
 
 #############################################################################################################
@@ -232,9 +299,15 @@ server <- function(input, output,session) {
         layout(title = 'Percentage of each vino taste within the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+<<<<<<< HEAD
+    }
+  })
+  
+=======
       }
     })
 
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
   #Piechart quality
   output$plot4 <- renderPlotly({
     
@@ -309,10 +382,17 @@ server <- function(input, output,session) {
         layout(title = 'Percentage of each vino quality within the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+<<<<<<< HEAD
+    }
+  })
+  
+  
+=======
       }
     })
 
 
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
   output$distPlot <- renderPlot({
     # generate bins based on input$bins from ui.Rt
     x    <- faithful[, 2] 
@@ -320,8 +400,13 @@ server <- function(input, output,session) {
     
     # draw the histogram with the specified number of bins
     hist(x, breaks = bins, col = 'darkgray', border = 'white')
+<<<<<<< HEAD
+  }
+  )
+=======
     }
     )
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
   
   
   output$property <- renderPrint({input$checkGroup})
@@ -361,9 +446,15 @@ server <- function(input, output,session) {
          col = clusters()$cluster,
          pch = 20, cex = 0.5)
     points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+<<<<<<< HEAD
+  }
+  )
+  
+=======
     }
   )
 
+>>>>>>> 4849d216cde4d419523809684b89bf3a611ce69d
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
