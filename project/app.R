@@ -15,7 +15,9 @@
 # install.packages("shinyjs")
 # install.packages("vembedr")
 # install.packages("shinyLP")
+# install.packages("shinythemes")
 
+library(shinythemes)
 library(shinyLP)
 library(tidyverse)
 library(shiny)
@@ -53,6 +55,7 @@ for(i in 1:dim(vino)[2]){
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
+                 shinythemes::themeSelector(),
                  tabPanel("Dataset",
                           useShinyjs(),
                           sidebarLayout(position="left",
@@ -155,7 +158,10 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               
                               ),
                               
-                              tabPanel('More'
+                              tabPanel('More',
+                                       radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
+                                                    inline = TRUE),
+                                       downloadButton('downloadReport')
                                        
                               )
                             )#TABSET PANEL
