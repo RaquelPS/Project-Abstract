@@ -13,7 +13,10 @@
 # install_github('ramnathv/rCharts', force= TRUE)
 # install_github('rCharts', 'ramnathv')
 # install.packages("shinyjs")
+# install.packages("vembedr")
+# install.packages("shinyLP")
 
+library(shinyLP)
 library(tidyverse)
 library(shiny)
 library(DT)
@@ -29,6 +32,7 @@ require(data.table)
 library(dplyr)
 library(shinyjs)
 library(plotly)
+library(vembedr)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -39,7 +43,8 @@ vino=vino %>%select(-starts_with("X"))
 #                      "free.sulfur.dioxide","total.sulfur.dioxide","density","pH",
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
-
+var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
+names(var_vino)
 #PUT THE SCALE IN THE CORRECT WAY
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
@@ -65,6 +70,12 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                              choices = c(unique(as.character(vino$Taste)))),
                                           
                                           checkboxInput("all","Select All/None", value=TRUE),
+                                          
+                                          checkboxGroupInput("checkGroup3", label = ("Aditional Variables"),
+                                                             choices = c(unique(as.character(names(var_vino))))),
+                                          ###,"Variant","pH","quality"
+                                          checkboxInput("all2","Select All/None", value=TRUE),
+                                          
                                           # Download Button
                                           downloadButton("downloadData", "Download Selection"),
                                           downloadButton("downloadData2", "Download Dataset")
@@ -129,7 +140,27 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               )
                             )#TABSET PANEL
                           )#MAIN PANEL
-                 )#TABPANEL 3
+                 ),#TABPANEL 3
+                 
+                 tabPanel("References",
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("About",
+                                       uiOutput("video")
+                                       
+                                       
+                              ),
+                              
+                              tabPanel("Links"
+                              
+                              ),
+                              
+                              tabPanel('More'
+                                       
+                              )
+                            )#TABSET PANEL
+                          )#MAIN PANEL
+                 )#TABPANEL 4
                  
 )#UI
 
@@ -149,6 +180,13 @@ server <- function(input, output,session) {
                              selected = if(input$all) unique(as.character(vino$Taste)))
   })# select/deselect all using action button
   
+  observe({
+    updateCheckboxGroupInput(session=session, 
+                             inputId="checkGroup3",
+                             choices = c(unique(as.character(names(var_vino)))),
+                             selected = if(input$all2) c(unique(as.character(names(var_vino)))) )
+  })# select/deselect all using action button
+  
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
@@ -161,6 +199,8 @@ server <- function(input, output,session) {
     data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
     
     data=data[data$Taste == input$checkGroup2,]
+    
+    data=data[,input$checkGroup3]
     
     data
   }))# Filter data based on selections
@@ -408,8 +448,15 @@ server <- function(input, output,session) {
       write.csv(datasetInput(), file, row.names = TRUE)
     }
   )
-}
 
+  output$video <- renderUI({
+    # HTML(paste0('<iframe width="200" height="100" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    
+    # iframe(width = "560", height = "315",
+           # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
+    ?tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
+  })
+}
 # output$distPlot <- renderPlot({
 #   # generate bins based on input$bins from ui.Rt
 #   x    <- faithful[, 2] 
