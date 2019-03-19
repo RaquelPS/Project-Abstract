@@ -164,7 +164,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        
                               ),
                               
-                              tabPanel("Links"
+                              tabPanel("Links",
+                                       uiOutput("tab")
                               
                               ),
                               
@@ -483,12 +484,19 @@ server <- function(input, output,session) {
   )
 
   output$video <- renderUI({
-    # HTML(paste0('<iframe width="200" height="100" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+     HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
     # iframe(width = "560", height = "315",
            # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
-    tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
+    #tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
   })
+  
+  output$tab <- renderUI({
+    url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+    tagList("URL link:", url)
+    
+  })
+  
 }
 # output$distPlot <- renderPlot({
 #   # generate bins based on input$bins from ui.Rt
