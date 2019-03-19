@@ -35,6 +35,7 @@ library(dplyr)
 library(shinyjs)
 library(plotly)
 library(vembedr)
+library(caret)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -51,7 +52,13 @@ scale_vino=vino
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
 }
-
+# spl1 = createDataPartition(dataW$Variant, p = 0.7, list = FALSE) 
+# spl2 = createDataPartition(dataR$Variant, p = 0.3, list = FALSE) 
+# 
+# a=vino[spl1,]
+# b=vino[spl2,]
+# 
+# dim(a)[1]+dim(b)[1]
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
@@ -230,11 +237,12 @@ server <- function(input, output,session) {
   })# Summary
   
   selectedData2 <- reactive({
-    vino = vino[1:input$obs,]
+    dataW=vino[vino$Variant=="white",]
+    dataR=vino[vino$Variant=="red",]
+    union(dataW[1:((input$obs)*0.7),],dataR[1:((input$obs)*0.3),])
   })
   
   output$plot2 <- renderPlotly({
-    
     p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
@@ -448,6 +456,18 @@ server <- function(input, output,session) {
       paste("Selection", ".csv", sep = "")
     },
     content = function(file) {
+      data <- vino
+      if (input$variant != "All") {
+        data <- data[data$Variant == input$variant,]
+      }
+      
+      #Choose the correct alcohol interval
+      data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+      #Choose the correct quality interval
+      data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+      
+      data=data[data$Taste == input$checkGroup2,]
+      data=data[,input$checkGroup3]
       write.csv(data, file, row.names = TRUE)
     }
   )
