@@ -46,7 +46,7 @@ vino=vino %>%select(-starts_with("X"))
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
 var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
-names(var_vino)
+scale_vino=vino
 #PUT THE SCALE IN THE CORRECT WAY
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
@@ -55,7 +55,8 @@ for(i in 1:dim(vino)[2]){
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
-                 shinythemes::themeSelector(),
+                 theme = shinytheme("cerulean"),
+                 #shinythemes::themeSelector(),
                  tabPanel("Dataset",
                           useShinyjs(),
                           sidebarLayout(position="left",
@@ -130,6 +131,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        
                                        selectInput('xcol1', label = 'X Variable', choices = names(vino)),
                                        selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
+                                       numericInput('obs', 'Number of Observations', 500,
+                                                    min = 1, max = dim(vino)[1]),
                                        plotlyOutput('plot2')
                               ),
                               
@@ -226,9 +229,13 @@ server <- function(input, output,session) {
     summary(data)
   })# Summary
   
+  selectedData2 <- reactive({
+    vino = vino[1:input$obs,]
+  })
+  
   output$plot2 <- renderPlotly({
     
-    p=ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
+    p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
     ggplotly(p)
@@ -438,20 +445,20 @@ server <- function(input, output,session) {
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(input$data, ".csv", sep = "")
+      paste("Selection", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      write.csv(data, file, row.names = TRUE)
     }
   )
   
   #Full data download
   output$downloadData2 <- downloadHandler(
     filename = function() {
-      paste(vino, ".csv", sep = "")
+      paste("Dataset", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      write.csv(vino, file, row.names = TRUE)
     }
   )
 
@@ -460,7 +467,7 @@ server <- function(input, output,session) {
     
     # iframe(width = "560", height = "315",
            # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
-    ?tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
+    tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
   })
 }
 # output$distPlot <- renderPlot({
