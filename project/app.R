@@ -13,7 +13,12 @@
 # install_github('ramnathv/rCharts', force= TRUE)
 # install_github('rCharts', 'ramnathv')
 # install.packages("shinyjs")
+# install.packages("vembedr")
+# install.packages("shinyLP")
+# install.packages("shinythemes")
 
+library(shinythemes)
+library(shinyLP)
 library(tidyverse)
 library(shiny)
 library(DT)
@@ -29,6 +34,8 @@ require(data.table)
 library(dplyr)
 library(shinyjs)
 library(plotly)
+library(vembedr)
+library(caret)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -39,15 +46,24 @@ vino=vino %>%select(-starts_with("X"))
 #                      "free.sulfur.dioxide","total.sulfur.dioxide","density","pH",
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
-
+var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
+scale_vino=vino
 #PUT THE SCALE IN THE CORRECT WAY
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
 }
-
+# spl1 = createDataPartition(dataW$Variant, p = 0.7, list = FALSE) 
+# spl2 = createDataPartition(dataR$Variant, p = 0.3, list = FALSE) 
+# 
+# a=vino[spl1,]
+# b=vino[spl2,]
+# 
+# dim(a)[1]+dim(b)[1]
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
+                 theme = shinytheme("cerulean"),
+                 #shinythemes::themeSelector(),
                  tabPanel("Dataset",
                           useShinyjs(),
                           sidebarLayout(position="left",
@@ -65,6 +81,12 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                              choices = c(unique(as.character(vino$Taste)))),
                                           
                                           checkboxInput("all","Select All/None", value=TRUE),
+                                          
+                                          checkboxGroupInput("checkGroup3", label = ("Aditional Variables"),
+                                                             choices = c(unique(as.character(names(var_vino))))),
+                                          ###,"Variant","pH","quality"
+                                          checkboxInput("all2","Select All/None", value=TRUE),
+                                          
                                           # Download Button
                                           downloadButton("downloadData", "Download Selection"),
                                           downloadButton("downloadData2", "Download Dataset")
@@ -116,6 +138,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        
                                        selectInput('xcol1', label = 'X Variable', choices = names(vino)),
                                        selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
+                                       numericInput('obs', 'Number of Observations', 500,
+                                                    min = 1, max = dim(vino)[1]),
                                        plotlyOutput('plot2')
                               ),
                               
@@ -129,7 +153,30 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               )
                             )#TABSET PANEL
                           )#MAIN PANEL
-                 )#TABPANEL 3
+                 ),#TABPANEL 3
+                 
+                 tabPanel("References",
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("About",
+                                       uiOutput("video")
+                                       
+                                       
+                              ),
+                              
+                              tabPanel("Links"
+                              
+                              ),
+                              
+                              tabPanel('More',
+                                       radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
+                                                    inline = TRUE),
+                                       downloadButton('downloadReport')
+                                       
+                              )
+                            )#TABSET PANEL
+                          )#MAIN PANEL
+                 )#TABPANEL 4
                  
 )#UI
 
@@ -149,6 +196,13 @@ server <- function(input, output,session) {
                              selected = if(input$all) unique(as.character(vino$Taste)))
   })# select/deselect all using action button
   
+  observe({
+    updateCheckboxGroupInput(session=session, 
+                             inputId="checkGroup3",
+                             choices = c(unique(as.character(names(var_vino)))),
+                             selected = if(input$all2) c(unique(as.character(names(var_vino)))) )
+  })# select/deselect all using action button
+  
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
@@ -161,6 +215,8 @@ server <- function(input, output,session) {
     data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
     
     data=data[data$Taste == input$checkGroup2,]
+    
+    data=data[,input$checkGroup3]
     
     data
   }))# Filter data based on selections
@@ -180,9 +236,14 @@ server <- function(input, output,session) {
     summary(data)
   })# Summary
   
+  selectedData2 <- reactive({
+    dataW=vino[vino$Variant=="white",]
+    dataR=vino[vino$Variant=="red",]
+    union(dataW[1:((input$obs)*0.7),],dataR[1:((input$obs)*0.3),])
+  })
+  
   output$plot2 <- renderPlotly({
-    
-    p=ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
+    p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
     ggplotly(p)
@@ -392,24 +453,43 @@ server <- function(input, output,session) {
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(input$data, ".csv", sep = "")
+      paste("Selection", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      data <- vino
+      if (input$variant != "All") {
+        data <- data[data$Variant == input$variant,]
+      }
+      
+      #Choose the correct alcohol interval
+      data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+      #Choose the correct quality interval
+      data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+      
+      data=data[data$Taste == input$checkGroup2,]
+      data=data[,input$checkGroup3]
+      write.csv(data, file, row.names = TRUE)
     }
   )
   
   #Full data download
   output$downloadData2 <- downloadHandler(
     filename = function() {
-      paste(vino, ".csv", sep = "")
+      paste("Dataset", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      write.csv(vino, file, row.names = TRUE)
     }
   )
-}
 
+  output$video <- renderUI({
+    # HTML(paste0('<iframe width="200" height="100" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    
+    # iframe(width = "560", height = "315",
+           # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
+    tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
+  })
+}
 # output$distPlot <- renderPlot({
 #   # generate bins based on input$bins from ui.Rt
 #   x    <- faithful[, 2] 
