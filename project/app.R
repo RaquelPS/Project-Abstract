@@ -13,7 +13,12 @@
 # install_github('ramnathv/rCharts', force= TRUE)
 # install_github('rCharts', 'ramnathv')
 # install.packages("shinyjs")
+# install.packages("vembedr")
+# install.packages("shinyLP")
+# install.packages("shinythemes")
 
+library(shinythemes)
+library(shinyLP)
 library(tidyverse)
 library(shiny)
 library(DT)
@@ -24,11 +29,13 @@ library(scales)
 library(devtools)
 library(Rcpp)
 library(rCharts)
-# require(markdown)
-# require(data.table)
+require(markdown)
+require(data.table)
 library(dplyr)
-# library(shinyjs)
+library(shinyjs)
 library(plotly)
+library(vembedr)
+library(caret)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -39,92 +46,139 @@ vino=vino %>%select(-starts_with("X"))
 #                      "free.sulfur.dioxide","total.sulfur.dioxide","density","pH",
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
-
+var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
+scale_vino=vino
 #PUT THE SCALE IN THE CORRECT WAY
 for(i in 1:dim(vino)[2]){
   if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
 }
-  
+# spl1 = createDataPartition(dataW$Variant, p = 0.7, list = FALSE) 
+# spl2 = createDataPartition(dataR$Variant, p = 0.3, list = FALSE) 
+# 
+# a=vino[spl1,]
+# b=vino[spl2,]
+# 
+# dim(a)[1]+dim(b)[1]
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
+                 theme = shinytheme("cerulean"),
+                 #shinythemes::themeSelector(),
+                 tabPanel("Dataset",
+                          useShinyjs(),
+                          sidebarLayout(position="left",
+                                        sidebarPanel(
+                                          selectInput("variant","Variant",
+                                                      c("All",unique(as.character(vino$Variant)))),
+                                          sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
+                                                      max = max(vino$alcohol), step = 0.1, value = c(10,12),
+                                                      animate = T, dragRange = T),
+                                          sliderInput("quality", label = ("Quality"), min = min(vino$quality),
+                                                      max = max(vino$quality), step = 1, value = c(5,8),
+                                                      animate = T, dragRange = T),
+                                          
+                                          checkboxGroupInput("checkGroup2", label = ("Taste"),
+                                                             choices = c(unique(as.character(vino$Taste)))),
+                                          
+                                          checkboxInput("all","Select All/None", value=TRUE),
+                                          
+                                          checkboxGroupInput("checkGroup3", label = ("Aditional Variables"),
+                                                             choices = c(unique(as.character(names(var_vino))))),
+                                          ###,"Variant","pH","quality"
+                                          checkboxInput("all2","Select All/None", value=TRUE),
+                                          
+                                          # Download Button
+                                          downloadButton("downloadData", "Download Selection"),
+                                          downloadButton("downloadData2", "Download Dataset")
+                                        ),#SIDEBAR PANEL
+                                        
+                                        mainPanel(
+                                          tabsetPanel(type="tabs",
+                                                      tabPanel("Exploration", DT::dataTableOutput("table"),verbatimTextOutput("taste")),
+                                                      tabPanel("Summary", verbatimTextOutput("summary"))        
+                                                      
+                                          )       
+                                        )#MAIN PANEL
+                          )#SIDEBAR LAYOUT
+                 ),#TAB PANEL 1
                  
-                 tabPanel("Correlation between two variables",
-                          
-                          selectInput('xcol1', label = 'X Variable', choices = names(vino)),
-                          selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
-                          
-                          mainPanel(
-                            plotlyOutput('plot2')
-                          )
-                 ),
                  
-                 tabPanel("Pie Chart-Variant",
-                          
-                          selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
-                          mainPanel(
-                            plotlyOutput('plot3')
-                          )
-                 ),
-                 
-                 tabPanel("Pie Chart-Quality",
-                          
-                          selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
-                          
-                          mainPanel(
-                            plotlyOutput('plot4')
-                          )
-                 ),
-                 
-                 tabPanel('Vinho Verde k-means clustering',
-                     selectInput('xcol', 'X Variable', names(vino)),
-                     selectInput('ycol', 'Y Variable', names(vino),
-                                 selected=names(vino)[[2]]),
-                     numericInput('clusters', 'Cluster count', 3,
-                                  min = 1, max = 9),
-                   mainPanel(
-                     plotOutput('plot1'))
-                   ),
-                 
-                 tabPanel("Data Exploration",
-                      sidebarLayout(position="left",
-                            sidebarPanel(
-                                selectInput("variant","Variant",
-                                      c("All",unique(as.character(vino$Variant)))),
-                                sliderInput("alcohol", label = ("Alcohol Content"), min = min(vino$alcohol),
-                                      max = max(vino$alcohol), step = 0.1, value = c(10,12),
-                                      animate = T, dragRange = T),
-                                sliderInput("quality", label = ("Quality"), min = min(vino$quality),
-                                      max = max(vino$quality), step = 1, value = c(5,8),
-                                      animate = T, dragRange = T),
-
-                                checkboxGroupInput("checkGroup2", label = ("Taste"),
-                                      choices = c(unique(as.character(vino$Taste)))),
-                                
-                                checkboxInput("all","Select All/None", value=TRUE),
-                                
-                                # Download Button
-                                downloadButton("downloadData", "Download Selection"),
-                                downloadButton("downloadData2", "Download Dataset")
-                                ),
-                            
-                      mainPanel(
-                        verbatimTextOutput("taste"),
-                        # Create a new row for the table.
-                        DT::dataTableOutput("table")
-                        #tableOutput("table")
-                      )
-                    )
-                  ),
                  
                  tabPanel("Data Visualization",
+                          # checkboxGroupInput("checkGroup", label = h3("Properties"), 
+                          #                    choices = c("All",unique(as.character(names(vino))),"Clear All"),
+                          #                    selected = c("All",unique(as.character(names(vino))),"Clear All")),
+                          # verbatimTextOutput("property")
                           
-                          checkboxGroupInput("checkGroup", label = h3("Properties"), 
-                                             choices = c("All",unique(as.character(names(vino))),"Clear All"),
-                                             selected = c("All",unique(as.character(names(vino))),"Clear All")),
-                          verbatimTextOutput("property")
-                          )
-          )
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("Pie Chart-Variant",
+                                       
+                                       selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
+                                       plotlyOutput('plot3')
+                              ),
+                              
+                              tabPanel("Pie Chart-Quality",
+                                       
+                                       selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
+                                       plotlyOutput('plot4')
+                              ),
+                              
+                              tabPanel("Bar plot",
+                                       plotlyOutput("plot5")
+                              )
+                            )#TABSET PANEL
+                          )#MAIN PANEL
+                 ),#TAB PANEL 2
+                 
+                 tabPanel("In-Depth Analysis",
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("Correlation between two variables",
+                                       
+                                       selectInput('xcol1', label = 'X Variable', choices = names(vino)),
+                                       selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
+                                       numericInput('obs', 'Number of Observations', 500,
+                                                    min = 1, max = dim(vino)[1]),
+                                       plotlyOutput('plot2')
+                              ),
+                              
+                              tabPanel('Vinho Verde k-means clustering',
+                                       selectInput('xcol', 'X Variable', names(vino)),
+                                       selectInput('ycol', 'Y Variable', names(vino),
+                                                   selected=names(vino)[[2]]),
+                                       numericInput('clusters', 'Cluster count', 3,
+                                                    min = 1, max = 9),
+                                       plotOutput('plot1')
+                              )
+                            )#TABSET PANEL
+                          )#MAIN PANEL
+                 ),#TABPANEL 3
+                 
+                 tabPanel("References",
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("About",
+                                       uiOutput("video")
+                                       
+                                       
+                              ),
+                              
+                              tabPanel("Links"
+                              
+                              ),
+                              
+                              tabPanel('More',
+                                       radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
+                                                    inline = TRUE),
+                                       downloadButton('downloadReport')
+                                       
+                              )
+                            )#TABSET PANEL
+                          )#MAIN PANEL
+                 )#TABPANEL 4
+                 
+)#UI
 
 
 #############################################################################################################
@@ -135,16 +189,20 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
 # Define server logic required to draw a histogram
 server <- function(input, output,session) {
   
-  # select/deselect all using action button
   observe({
     updateCheckboxGroupInput(session=session, 
                              inputId="checkGroup2",
                              choices = unique(as.character(vino$Taste)),
                              selected = if(input$all) unique(as.character(vino$Taste)))
-  })
+  })# select/deselect all using action button
   
+  observe({
+    updateCheckboxGroupInput(session=session, 
+                             inputId="checkGroup3",
+                             choices = c(unique(as.character(names(var_vino)))),
+                             selected = if(input$all2) c(unique(as.character(names(var_vino)))) )
+  })# select/deselect all using action button
   
-  # Filter data based on selections
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
@@ -158,20 +216,39 @@ server <- function(input, output,session) {
     
     data=data[data$Taste == input$checkGroup2,]
     
-    data
-  }))
-  
-  #Correlation plot
-  output$plot2 <- renderPlotly({
+    data=data[,input$checkGroup3]
     
-    p=ggplot(vino, aes_string(x=input$xcol1, y=input$ycol1, color=vino$Taste)) +
+    data
+  }))# Filter data based on selections
+  
+  output$summary <- renderPrint({
+    data <- vino
+    if (input$variant != "All") {
+      data <- data[data$Variant == input$variant,]
+    }
+    
+    #Choose the correct alcohol interval
+    data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+    #Choose the correct quality interval
+    data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+    
+    data=data[data$Taste == input$checkGroup2,]
+    summary(data)
+  })# Summary
+  
+  selectedData2 <- reactive({
+    dataW=vino[vino$Variant=="white",]
+    dataR=vino[vino$Variant=="red",]
+    union(dataW[1:((input$obs)*0.7),],dataR[1:((input$obs)*0.3),])
+  })
+  
+  output$plot2 <- renderPlotly({
+    p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
     ggplotly(p)
-  })
+  })#Correlation plot
   
-  
-  #Piechart variant
   output$plot3 <- renderPlotly({
     
     if (input$variant.pie=="red"){
@@ -232,10 +309,9 @@ server <- function(input, output,session) {
         layout(title = 'Percentage of each vino taste within the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-      }
-    })
-
-  #Piechart quality
+    }
+  })#Piechart variant
+  
   output$plot4 <- renderPlotly({
     
     if (input$quality.pie=="red"){
@@ -309,22 +385,32 @@ server <- function(input, output,session) {
         layout(title = 'Percentage of each vino quality within the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-      }
-    })
-
-
-  output$distPlot <- renderPlot({
-    # generate bins based on input$bins from ui.Rt
-    x    <- faithful[, 2] 
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white')
     }
-    )
+  })#Piechart quality
   
   
-  output$property <- renderPrint({input$checkGroup})
+  output$plot5 <- renderPlotly({
+    p <- ggplot(vino, aes(x = Variant)) + 
+      geom_bar(aes(y = ..count../sum(..count..), fill = Taste)) + 
+      scale_fill_brewer(palette = "Set3") + 
+      ylab("Percent") + 
+      ggtitle("Show precentages in bar chart")
+    
+    p <- ggplotly(p)
+    p
+  })
+  
+  # output$distPlot <- renderPlot({
+  #   # generate bins based on input$bins from ui.Rt
+  #   x    <- faithful[, 2] 
+  #   bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  #   
+  #   # draw the histogram with the specified number of bins
+  #   hist(x, breaks = bins, col = 'darkgray', border = 'white')
+  # })
+  
+  
+  # output$property <- renderPrint({input$checkGroup})
   
   
   # output$property <- renderPlot({
@@ -361,30 +447,49 @@ server <- function(input, output,session) {
          col = clusters()$cluster,
          pch = 20, cex = 0.5)
     points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
-    }
+  }
   )
-
+  
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(input$data, ".csv", sep = "")
+      paste("Selection", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      data <- vino
+      if (input$variant != "All") {
+        data <- data[data$Variant == input$variant,]
+      }
+      
+      #Choose the correct alcohol interval
+      data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+      #Choose the correct quality interval
+      data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+      
+      data=data[data$Taste == input$checkGroup2,]
+      data=data[,input$checkGroup3]
+      write.csv(data, file, row.names = TRUE)
     }
   )
   
   #Full data download
   output$downloadData2 <- downloadHandler(
     filename = function() {
-      paste(vino, ".csv", sep = "")
+      paste("Dataset", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = TRUE)
+      write.csv(vino, file, row.names = TRUE)
     }
   )
-}
 
+  output$video <- renderUI({
+    # HTML(paste0('<iframe width="200" height="100" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    
+    # iframe(width = "560", height = "315",
+           # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
+    tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
+  })
+}
 # output$distPlot <- renderPlot({
 #   # generate bins based on input$bins from ui.Rt
 #   x    <- faithful[, 2] 
@@ -398,4 +503,3 @@ server <- function(input, output,session) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
