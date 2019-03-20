@@ -16,7 +16,9 @@
 # install.packages("vembedr")
 # install.packages("shinyLP")
 # install.packages("shinythemes")
+# install.packages("gridExtra")
 
+library(gridExtra)
 library(shinythemes)
 library(shinyLP)
 library(tidyverse)
@@ -47,11 +49,13 @@ vino=vino %>%select(-starts_with("X"))
 #                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
 var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
-scale_vino=vino
-#PUT THE SCALE IN THE CORRECT WAY
-for(i in 1:dim(vino)[2]){
-  if(is.numeric(vino[,i])==TRUE) scale_vino[,i]=scale(vino[,i])
-}
+scale_vino=vino %>% select(-Taste,-Variant)
+#scale_vino=as.data.frame(scale(scale_vino))
+#scale_vino=merge(scale_vino,vino[,c("Taste","Variant")])
+# PUT THE SCALE IN THE CORRECT WAY
+# for(i in 1:dim(vino)[2]){
+#   if(is.numeric(vino[,i])==TRUE) scale_vino=vino[,-i]
+# }
 # spl1 = createDataPartition(dataW$Variant, p = 0.7, list = FALSE) 
 # spl2 = createDataPartition(dataR$Variant, p = 0.3, list = FALSE) 
 # 
@@ -59,6 +63,8 @@ for(i in 1:dim(vino)[2]){
 # b=vino[spl2,]
 # 
 # dim(a)[1]+dim(b)[1]
+
+#as.factor(vino$quality)
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
@@ -102,8 +108,6 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           )#SIDEBAR LAYOUT
                  ),#TAB PANEL 1
                  
-                 
-                 
                  tabPanel("Data Visualization",
                           # checkboxGroupInput("checkGroup", label = h3("Properties"), 
                           #                    choices = c("All",unique(as.character(names(vino))),"Clear All"),
@@ -112,20 +116,23 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           
                           mainPanel(
                             tabsetPanel(
-                              tabPanel("Pie Chart-Variant",
+                              tabPanel(p(icon("line-chart"),"Pie Chart-Variant"),
                                        
                                        selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
-                                       plotlyOutput('plot3')
+                                       column(width = 6, class = "well",plotlyOutput('plot3')),                              
+                                       column(width = 6, class = "well",plotlyOutput("plot5"))
                               ),
                               
                               tabPanel("Pie Chart-Quality",
                                        
                                        selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
-                                       plotlyOutput('plot4')
+                                       column(width=6,class="well",plotlyOutput('plot4')),
+                                       column(width=6,class="well",plotlyOutput('plot6'))
                               ),
                               
-                              tabPanel("Bar plot",
-                                       plotlyOutput("plot5")
+                              tabPanel("Box plots",
+                                       selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
+                                       plotlyOutput("plot7")       
                               )
                             )#TABSET PANEL
                           )#MAIN PANEL
@@ -162,20 +169,16 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                             tabsetPanel(
                               tabPanel("About",
                                        uiOutput("video")
-                                       
-                                       
                               ),
                               
                               tabPanel("Links",
                                        uiOutput("tab")
-                              
                               ),
                               
                               tabPanel('More',
                                        radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
                                                     inline = TRUE),
                                        downloadButton('downloadReport')
-                                       
                               )
                             )#TABSET PANEL
                           )#MAIN PANEL
@@ -320,6 +323,7 @@ server <- function(input, output,session) {
         layout(title = 'Percentage of each vino taste within the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+      
     }
   })#Piechart variant
   
@@ -410,6 +414,27 @@ server <- function(input, output,session) {
     p <- ggplotly(p)
     p
   })
+  
+  output$plot6 <- renderPlotly({
+    vino$quality=as.factor(vino$quality)
+    p <- ggplot(vino, aes(x = Variant)) + 
+      geom_bar(aes(y = ..count../sum(..count..), fill = quality)) + 
+      scale_fill_brewer(palette = "Set3") + 
+      ylab("Percent") + 
+      ggtitle("Show precentages in bar chart")
+    
+    p <- ggplotly(p)
+    p
+  })
+  
+  output$plot7 <- renderPlotly({
+    # p <- plot_ly(vino, y = ~input$bp, color = ~Taste, type = "box")
+    # p
+    p <- plot_ly(vino, x = ~Variant, y = ~fixed.acidity, color = ~Taste, type = "box") %>%
+      layout(boxmode = "group")
+  })
+  
+  
   
   # output$distPlot <- renderPlot({
   #   # generate bins based on input$bins from ui.Rt
@@ -514,17 +539,7 @@ server <- function(input, output,session) {
     
   })
   
-}
-# output$distPlot <- renderPlot({
-#   # generate bins based on input$bins from ui.Rt
-#   x    <- faithful[, 2] 
-#   bins <- seq(min(x), max(x), length.out = input$bins + 1)
-#   
-#   # draw the histogram with the specified number of bins
-#   hist(x, breaks = bins, col = 'darkgray', border = 'white')
-# })
-
-
+}#SERVER
 
 # Run the application 
 shinyApp(ui = ui, server = server)
