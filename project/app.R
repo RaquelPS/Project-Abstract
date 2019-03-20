@@ -138,8 +138,10 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        
                                        selectInput('xcol1', label = 'X Variable', choices = names(vino)),
                                        selectInput('ycol1', label = 'Y Variable', choices = names(vino)),
-                                       numericInput('obs', 'Number of Observations', 500,
-                                                    min = 1, max = dim(vino)[1]),
+                                       numericInput('obsred', 'Number of Observations of Red wine', 500,
+                                                    min = 1, max = nrow(vino %>% filter(Variant=="red"))),
+                                       numericInput('obswhite', 'Number of Observations of White wine', 500,
+                                                    min = 1, max = nrow(vino %>% filter(Variant=="white"))),
                                        plotlyOutput('plot2')
                               ),
                               
@@ -206,7 +208,8 @@ server <- function(input, output,session) {
   output$table <- DT::renderDataTable(DT::datatable({
     data <- vino
     if (input$variant != "All") {
-      data <- data[data$Variant == input$variant,]
+      data=data %>% filter(Variant %in% input$variant)
+      #data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
@@ -214,9 +217,12 @@ server <- function(input, output,session) {
     #Choose the correct quality interval
     data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
     
-    data=data[data$Taste == input$checkGroup2,]
+    #Choose the corresponding taste observations
+    data=data %>% filter(Taste %in% input$checkGroup2)
     
-    data=data[,input$checkGroup3]
+    #Choose the corresponding additional variables
+    data=data %>% select(input$checkGroup3)
+    #data=data[,input$checkGroup3]
     
     data
   }))# Filter data based on selections
@@ -224,22 +230,26 @@ server <- function(input, output,session) {
   output$summary <- renderPrint({
     data <- vino
     if (input$variant != "All") {
-      data <- data[data$Variant == input$variant,]
+      data=data %>% filter(Variant %in% input$variant)
+      #data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
-    data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+    data=data %>% filter(alcohol>min(input$alcohol)& alcohol<max(input$alcohol))    
     #Choose the correct quality interval
-    data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+    data=data %>% filter(quality>min(input$quality) & quality<max(input$quality))    
     
-    data=data[data$Taste == input$checkGroup2,]
+    #Choose the corresponding taste observations
+    data=data %>% filter(Taste %in% input$checkGroup2)
+    #data=data[data$Taste == input$checkGroup2,]
+    
     summary(data)
   })# Summary
   
   selectedData2 <- reactive({
-    dataW=vino[vino$Variant=="white",]
-    dataR=vino[vino$Variant=="red",]
-    union(dataW[1:((input$obs)*0.7),],dataR[1:((input$obs)*0.3),])
+    dataW=vino %>% filter(Variant=="white")
+    dataR=vino %>% filter(Variant=="red")
+    union(dataW %>% head(input$obswhite), dataR %>% head(input$obsred))
   })
   
   output$plot2 <- renderPlotly({
@@ -458,16 +468,21 @@ server <- function(input, output,session) {
     content = function(file) {
       data <- vino
       if (input$variant != "All") {
-        data <- data[data$Variant == input$variant,]
+        data=data %>% filter(Variant %in% input$variant)
       }
       
       #Choose the correct alcohol interval
-      data=data %>% filter(data$alcohol>min(input$alcohol)& data$alcohol<max(input$alcohol))    
+      data=data %>% filter(alcohol>min(input$alcohol)& alcohol<max(input$alcohol))    
       #Choose the correct quality interval
-      data=data %>% filter(data$quality>min(input$quality) & data$quality<max(input$quality))    
+      data=data %>% filter(quality>min(input$quality) & quality<max(input$quality))     
       
-      data=data[data$Taste == input$checkGroup2,]
-      data=data[,input$checkGroup3]
+      #Choose the corresponding taste observations
+      data=data %>% filter(Taste %in% input$checkGroup2)
+      
+      #Choose the corresponding additional variables
+      data=data %>% select(input$checkGroup3)
+      #data=data[,input$checkGroup3]
+      
       write.csv(data, file, row.names = TRUE)
     }
   )
