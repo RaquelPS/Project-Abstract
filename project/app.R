@@ -493,7 +493,9 @@ server <- function(input, output,session) {
   
   output$tab <- renderUI({
     url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-    tagList("URL link:", url)
+    url1 <- a("UCI sdfgds Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+    url2 <- a("UCI dsdsb Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+    tagList(div("URL link:", url),div("URL link:", url1),div("URL link:", url2))
     
   })
   
