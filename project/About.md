@@ -11,4 +11,4 @@ Note: The dataset is actually loaded from http://halweb.uc3m.es/esp/Personal/per
 
 Date updated: 28/03/2019
 
-About author: Raquel Parra Suazo and Shenbin Zheng, students of the m?ster in Statistics for Data Science in the University Carlos III of Madrid.
+About author: Raquel Parra Suazo and Shenbin Zheng, students of the master in Statistics for Data Science in the University Carlos III of Madrid.
