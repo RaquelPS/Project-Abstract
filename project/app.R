@@ -100,7 +100,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                           checkboxInput("all","Select All/None", value=TRUE),
                                           
                                           checkboxGroupInput("checkGroup3", label = ("Aditional Variables"),
-                                                             choices = c(unique(as.character(names(var_vino))))),
+                                                             choices = c(unique(as.character(names(vino))))),
                                           ###,"Variant","pH","quality"
                                           checkboxInput("all2","Select All/None", value=TRUE),
                                           
@@ -111,7 +111,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                         
                                         mainPanel(
                                           tabsetPanel(type="tabs",
-                                                      tabPanel("Exploration", DT::dataTableOutput("table"),verbatimTextOutput("taste")),
+                                                      tabPanel(p(icon("search"),"Exploration"), DT::dataTableOutput("table"),verbatimTextOutput("taste")),
                                                       tabPanel("Summary", verbatimTextOutput("summary"))        
                                                       
                                           )       
@@ -127,31 +127,31 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           
                           mainPanel(
                             tabsetPanel(
-                              tabPanel("Pie Chart-Variant",
+                              tabPanel("Taste",
                                        
-                                       selectInput('variant.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
+                                       selectInput('taste.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width = 6, class = "well",plotlyOutput('plot3')),                              
                                        column(width = 6, class = "well",plotlyOutput("plot5"))
                               ),
                               
-                              tabPanel("Pie Chart-Quality",
+                              tabPanel("Quality",
                                        
-                                       selectInput('quality.pie', label = 'Quality', choices = unique(as.character(vino$Variant))),
+                                       selectInput('quality.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width=6,class="well",plotlyOutput('plot4')),
                                        column(width=6,class="well",plotlyOutput('plot6'))
                               ),
                               
-                              tabPanel("Box plots",
+                              tabPanel("Properties",
                                        selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
                                        plotlyOutput("plot7")       
                               ),
                               
-                              tabPanel("Properties Comparison",
+                              tabPanel("Variant Comparison",
                                        selectInput("comp", label="Property" ,choices=c(unique(as.character(names(scale_vino))))),
                                        plotlyOutput("plot8") 
                               ),
                               
-                              tabPanel("Correlation between two variables",
+                              tabPanel("Correlation between properties",
                                     fluidRow(   
                                        column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
                                        column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
@@ -174,7 +174,9 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        fluidRow(
                                        column(width=3,selectInput('tastePred', label = 'Taste desired', choices = unique(as.character(vino$Taste)))),
                                        column(width=3,numericInput('alcoholPred', 'Grades of alcohol desired', 10,
-                                                                   min = min(vino$alcohol), max = max(vino$alcohol),step=0.1)
+                                                                   min = min(vino$alcohol), max = max(vino$alcohol),step=0.1)),
+                                       column(width=3,numericInput('qualityPred', 'Quality desired', 6,
+                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1)
                                        )
                               )
                               ),
@@ -194,18 +196,19 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           )#MAIN PANEL
                  ),#TABPANEL 3
                  
-                 tabPanel(p(icon("paperclip"),"References"),
+                 tabPanel(p(icon("link"),"More"),
                           mainPanel(
                             tabsetPanel(
-                              tabPanel("About",
+                              tabPanel(p(icon("video"),"About"),
                                        uiOutput("video")
                               ),
                               
-                              tabPanel("Links",
-                                       uiOutput("tab")
+                              tabPanel(p(icon("paperclip"),"Documentation"),
+                                       #uiOutput("tab"),
+                                       includeMarkdown("About.md")
                               ),
                               
-                              tabPanel('Report',
+                              tabPanel(p(icon("file-alt"),'Report'),
                                        radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
                                                     inline = TRUE),
                                        downloadButton('downloadReport')
@@ -235,8 +238,8 @@ server <- function(input, output,session) {
   observe({
     updateCheckboxGroupInput(session=session, 
                              inputId="checkGroup3",
-                             choices = c(unique(as.character(names(var_vino)))),
-                             selected = if(input$all2) {c(unique(as.character(names(var_vino))))})
+                             choices = c(unique(as.character(names(vino)))),
+                             selected = if(input$all2) {c(unique(as.character(names(vino))))})
   })# select/deselect all using action button
   
   output$table <- DT::renderDataTable(DT::datatable({
@@ -277,6 +280,9 @@ server <- function(input, output,session) {
     data=data %>% filter(Taste %in% input$checkGroup2)
     #data=data[data$Taste == input$checkGroup2,]
     
+    #Choose the corresponding additional variables
+    data=data %>% select(input$checkGroup3)
+    
     summary(data)
   })# Summary
   
@@ -290,13 +296,14 @@ server <- function(input, output,session) {
     p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
      # scale_fill_brewer(palette = "Set3")+
-      geom_smooth(method="lm", se=TRUE, fullrange=TRUE)
+      geom_smooth(method="lm", se=TRUE, fullrange=TRUE)+
+      theme_minimal()
     ggplotly(p)
   })#Correlation plot
   
   output$plot3 <- renderPlotly({
     
-    if (input$variant.pie=="red"){
+    if (input$taste.pie=="red"){
       
       # x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="red")
       # x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="red")
@@ -320,12 +327,12 @@ server <- function(input, output,session) {
       #   geom_text(aes(y = value), 
       #                 label = percent(value), size=3) 
       
-      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie') %>%
-        layout(title = 'Percentage of each vino taste within the red variant',
+      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie',colors ="Set3") %>%
+        layout(title = 'Taste distribution in the red variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
-    }else if (input$variant.pie=="white"){
+    }else if (input$taste.pie=="white"){
       
       # x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="white")
       # x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="white")
@@ -350,8 +357,8 @@ server <- function(input, output,session) {
       #   geom_text(aes(y = value), 
       #             label = percent(value), size=3) 
       
-      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie') %>%
-        layout(title = 'Percentage of each vino taste within the white variant',
+      plot_ly(df, labels = ~Taste, values = ~value, type = 'pie',colors="Set3") %>%
+        layout(title = 'Taste distribution in the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
@@ -391,8 +398,8 @@ server <- function(input, output,session) {
       #   geom_text(aes(y = value), 
       #             label = percent(value), size=3) 
       
-      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie') %>%
-        layout(title = 'Percentage of each vino quality within the red variant',
+      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie',colors="Set3") %>%
+        layout(title = 'Quality distribution in the red variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
@@ -427,8 +434,8 @@ server <- function(input, output,session) {
       #   geom_text(aes(y = value), 
       #             label = percent(value), size=3) 
       
-      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie') %>%
-        layout(title = 'Percentage of each vino quality within the white variant',
+      plot_ly(df, labels = ~Quality, values = ~value, type = 'pie', colors="Set1") %>%
+        layout(title = 'Quality distribution in the white variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
     }
@@ -439,8 +446,9 @@ server <- function(input, output,session) {
     p <- ggplot(vino, aes(x = Variant)) + 
       geom_bar(aes(y = ..count../sum(..count..), fill = Taste)) + 
       scale_fill_brewer(palette = "Set3") + 
-      ylab("Percent") + 
-      ggtitle("Show precentages in bar chart")
+      ylab("Percentage") + 
+      theme_minimal()+
+      ggtitle("Taste distribution in both variants")
     
     p <- ggplotly(p)
     p
@@ -451,16 +459,19 @@ server <- function(input, output,session) {
     p <- ggplot(vino, aes(x = Variant)) + 
       geom_bar(aes(y = ..count../sum(..count..), fill = quality)) + 
       scale_fill_brewer(palette = "Set3") + 
-      ylab("Percent") + 
-      ggtitle("Show precentages in bar chart")
+      ylab("Percentage") + 
+      theme_minimal()+
+      ggtitle("Quality distribution in both variants")
     
     p <- ggplotly(p)
     p
   })
   
   output$plot7 <- renderPlotly({
-    p<-ggplot(vino,aes_string(x="Taste",y=input$bp))+geom_boxplot(outlier.colour = NULL, aes_string( fill="Taste"))+
-      scale_fill_brewer(palette = "Set2")
+    p<-ggplot(vino,aes_string(x="Taste",y=input$bp))+
+      geom_boxplot(aes(color=Taste),outlier.shape = NA)+
+      scale_fill_brewer(palette = "Set3")+
+      theme_minimal()
     p<-ggplotly(p)
     p
     # p <- plot_ly(vino, x = ~Taste, y = ~input$bp, color = ~Taste, type = "box") %>%
@@ -470,10 +481,11 @@ server <- function(input, output,session) {
   
   output$plot8 <- renderPlotly({
     p <- ggplot(vino, aes_string(x = input$comp)) + 
-      geom_bar(aes(y = ..count.., fill = Variant)) + 
+      geom_bar(aes(y = ..count.., fill = Variant)) +
       scale_fill_brewer(palette = "Set2") + 
-      ylab("Percent") + 
-      ggtitle("Show precentages in bar chart")
+      ylab("Number of wines") + 
+      theme_minimal()
+      #ggtitle("Show precentages in bar chart")
     
     p <- ggplotly(p)
     p
@@ -585,13 +597,13 @@ server <- function(input, output,session) {
     #tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
   })
   
-  output$tab <- renderUI({
-    url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-    url1 <- a("UCI sdfgds Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-    url2 <- a("UCI dsdsb Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-    tagList(div("URL link:", url),div("URL link:", url1),div("URL link:", url2))
-    
-  })
+  # output$tab <- renderUI({
+  #   url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+  #   url1 <- a("UCI sdfgds Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+  #   url2 <- a("UCI dsdsb Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
+  #   tagList(div("URL link:", url),div("URL link:", url1),div("URL link:", url2))
+  #   
+  # })
   
 }#SERVER
 
