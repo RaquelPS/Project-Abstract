@@ -176,9 +176,15 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        column(width=3,numericInput('alcoholPred', 'Grades of alcohol desired', 10,
                                                                    min = min(vino$alcohol), max = max(vino$alcohol),step=0.1)),
                                        column(width=3,numericInput('qualityPred', 'Quality desired', 6,
-                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1)
+                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1)),
+                                       column(width=3,numericInput('acidityPred', 'Acidity desired', 6,
+                                                                          min = min(vino$fixed.acidity), max = max(vino$fixed.acidity),step=0.1)),
+                                       column(width=3,numericInput('sugarPred', 'Sugar desired', 6,
+                                                                   min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1)),
+                                       column(width=3,numericInput('phPred', 'pH desired', 3.5,
+                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01)
                                        )
-                              )
+                                       )
                               ),
                               verbatimTextOutput("pred")
                               
