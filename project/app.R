@@ -19,31 +19,8 @@
 # install.packages("gridExtra")
 # install.packages("e1071")
 
-library(e1071)
-library(gridExtra)
-library(shinythemes)
-library(shinyLP)
-library(tidyverse)
-library(shiny)
-library(DT)
-library(mice)
-library(BH)
-library(ggplot2)
-library(scales)
-library(devtools)
-library(Rcpp)
-library(rCharts)
-require(markdown)
-require(data.table)
-library(dplyr)
-library(shinyjs)
-library(plotly)
-library(vembedr)
-library(caret)
-library(rpart)
 packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
 lapply(packages, require, character.only = TRUE)
-
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -128,57 +105,23 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               ),
                               
                               tabPanel("Correlation between properties",
-                                    fluidRow(   
-                                       column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
-                                       column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
-                                       column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="red")))),
-                                       column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="white"))))
-                                    ),
-                                    plotlyOutput('plot2'),
-                                    verbatimTextOutput("correlation.comments")
-                                    )
+                                       fluidRow(   
+                                         column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
+                                         column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
+                                         column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="red")))),
+                                         column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="white"))))
+                                       ),
+                                       plotlyOutput('plot2'),
+                                       verbatimTextOutput("correlation.comments")
+                              )
                             )#TABSET PANEL
                           )#MAIN PANEL
                  ),#TAB PANEL 2
                  
                  tabPanel(p(icon("wine-glass-alt") ,"Predictive model"),
                           
-<<<<<<< HEAD
-                            tabsetPanel(
-                              tabPanel("What's the perfect wine for the ocassion?",
-                                  mainPanel(
-                                    sidebarLayout(position="left",
-                                  
-                                    sidebarPanel(
-                                       selectInput('tastePred', label = 'Taste desired', choices = unique(as.character(vino$Taste))),
-                                       numericInput('alcoholPred', 'Grades of alcohol desired', 10,
-                                                                   min = min(vino$alcohol), max = max(vino$alcohol),step=0.1),
-                                       numericInput('qualityPred', 'Quality desired', 6,
-                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1),
-                                       numericInput('acidityPred', 'Acidity desired', 6,
-                                                                          min = min(vino$fixed.acidity), max = max(vino$fixed.acidity),step=0.1),
-                                       numericInput('sugarPred', 'Sugar desired', 6,
-                                                                   min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1),
-                                       numericInput('phPred', 'pH desired', 3.5,
-                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01),
-                                       actionButton("Enter", "Enter Values")
-                                       
-                                       
-                                    ),
-                                    fluidPage(
-                                    verbatimTextOutput("Pred"),
-                                    verbatimTextOutput("Pred.comments"),
-                                    uiOutput("buy")
-                                    )
-                                  )
-                                 )#MAIN PANEL
-                              )
-                              
-                              
-                            )#TABSET PANEL
-=======
                           tabsetPanel(
                             tabPanel("What's the perfect wine for the ocassion?",
                                      mainPanel(
@@ -211,7 +154,6 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                             
                             
                           )#TABSET PANEL
->>>>>>> 0f4ed4f4f129ecdbf515b4753155fbb68a393a2b
                           
                  ),#TABPANEL 3
                  
@@ -386,8 +328,8 @@ server <- function(input, output,session) {
   
   output$taste.comments=renderText({
     "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant.
-Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
-With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
+    Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
+    With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
   })
   
   #Second chapter: quality pie
@@ -452,7 +394,7 @@ With this barplot we also wanted to represent the large different of amount of d
   
   output$quality.comments=renderText({
     "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant.
-In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
+    In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
   })
   
   #Second chapter: boxplots of each variable
@@ -476,7 +418,7 @@ In the right hand side we have also ploted a barplot to point out the same concl
       scale_fill_brewer(palette = "Set2") + 
       ylab("Number of wines") + 
       theme_minimal()
-      
+    
     p <- ggplotly(p)
     p
   })
@@ -499,13 +441,6 @@ In the right hand side we have also ploted a barplot to point out the same concl
     
     data.pred1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
                             pH, quality, Taste)
-<<<<<<< HEAD
-    
-    output$Pred <- renderText({
-      x=predict(mymodel, data.pred1)
-      if(which.max(x)==1) print("Red")
-      else print("White")
-=======
     
     output$Pred <- renderText({
       x=predict(mymodel, data.pred1)
@@ -530,43 +465,9 @@ In the right hand side we have also ploted a barplot to point out the same concl
       if(which.max(x)==1) tagList(div("Where to buy:"),div(url1))
       else tagList(div("Where to buy:"),div(url2))
       
->>>>>>> 0f4ed4f4f129ecdbf515b4753155fbb68a393a2b
     })
-      
-      output$Pred.comments=renderText({
-        x=predict(mymodel, data.pred1)
-        
-        if(which.max(x)==1) print("Red Vinho Verde wines are an intense red color, 
-                                  sometimes with a pink or bright red foam, and with a vinous aroma, 
-                                  especially of berries. In the mouth it is fresh and intense, 
-                                  and a very good food wine.")
-        else print("White Vinho Verde wines are citrus or straw-colored with rich,
-                   fruity and floral aromas, depending on the grapes that are used. 
-                   They have a balanced palate, and are intense and very refreshing.")
-  
-      })
-      
-      output$buy <- renderUI({
-        url1 <- a("Red wine shopping!", href="https://www.portugalvineyards.com/es/s/274/vinho-verde#s[7][]:690&s[6][]:522&s[8][]:&rg:&sid:1&h:leftColumn&id_seo:274")
-        url2 <- a("White wine shopping!", href="https://www.portugalvineyards.com/es/s/274/vinho-verde#s[7][]:700&s[6][]:522&s[8][]:&rg:&sid:1&h:leftColumn&id_seo:274")
-        if(which.max(x)==1) tagList(div("Where to buy:"),div(url1))
-        else tagList(div("Where to buy:"),div(url2))
-        
-      })
   })
   
-<<<<<<< HEAD
-  
-  
-  
-  
-  
-  
-  
-  
-  
-=======
->>>>>>> 0f4ed4f4f129ecdbf515b4753155fbb68a393a2b
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
@@ -602,18 +503,14 @@ In the right hand side we have also ploted a barplot to point out the same concl
       write.csv(vino, file, row.names = TRUE)
     }
   )
-
+  
   output$video <- renderUI({
-     HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
   })
   
-<<<<<<< HEAD
-
-=======
->>>>>>> 0f4ed4f4f129ecdbf515b4753155fbb68a393a2b
   
-}#SERVER
+  }#SERVER
 
 # Run the application 
 shinyApp(ui = ui, server = server)
