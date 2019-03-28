@@ -85,8 +85,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                         
                                         mainPanel(
                                           tabsetPanel(type="tabs",
-                                                      tabPanel(p(icon("search"),"Exploration"), DT::dataTableOutput("table"),verbatimTextOutput("taste")),
-                                                      tabPanel("Summary", verbatimTextOutput("summary"))        
+                                                      tabPanel(p(icon("search"),"Exploration"), DT::dataTableOutput("table"),verbatimTextOutput("taste"),verbatimTextOutput("table.comments")),
+                                                      tabPanel("Summary", verbatimTextOutput("summary"), verbatimTextOutput("summary.comments"))        
                                                       
                                           )       
                                         )#MAIN PANEL
@@ -100,14 +100,16 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        
                                        selectInput('taste.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width = 6, class = "well",plotlyOutput('plot3')),                              
-                                       column(width = 6, class = "well",plotlyOutput("plot5"))
+                                       column(width = 6, class = "well",plotlyOutput("plot5")),
+                                       verbatimTextOutput("taste.comments")
                               ),
                               
                               tabPanel("Quality",
                                        
                                        selectInput('quality.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width=6,class="well",plotlyOutput('plot4')),
-                                       column(width=6,class="well",plotlyOutput('plot6'))
+                                       column(width=6,class="well",plotlyOutput('plot6')),
+                                       verbatimTextOutput("quality.comments")
                               ),
                               
                               tabPanel("Properties",
@@ -129,9 +131,9 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
                                                     min = 1, max = nrow(vino %>% filter(Variant=="white"))))
                                     ),
-                                       plotlyOutput('plot2')
-                                    
-                              )
+                                    plotlyOutput('plot2'),
+                                    verbatimTextOutput("correlation.comments")
+                                    )
                             )#TABSET PANEL
                           )#MAIN PANEL
                  ),#TAB PANEL 2
@@ -156,21 +158,9 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        verbatimTextOutput("Pred")
                                        )
                                        )
-                              
-                              
-                              
-                              # tabPanel('Vinho Verde k-means clustering',
-                              #          selectInput('xcol', 'X Variable', names(vino)),
-                              #          selectInput('ycol', 'Y Variable', names(vino),
-                              #                      selected=names(vino)[[2]]),
-                              #          numericInput('clusters', 'Cluster count', 3,
-                              #                       min = 1, max = 9),
-                              #          plotOutput('plot1')
-                              # )
-                              
-                            )#TABSET PANEL
-                          )#MAIN PANEL
-                 ),#TABPANEL 3
+                              )#TABSET PANEL
+                            )#MAIN PANEL
+                          ),#TABPANEL 3
                  
                  tabPanel(p(icon("link"),"More"),
                           mainPanel(
@@ -204,6 +194,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
 # Define server logic required to draw a histogram
 server <- function(input, output,session) {
   
+  #First chapter: data exploration and summary
   observe({
     updateCheckboxGroupInput(session=session, 
                              inputId="checkGroup2",
@@ -237,6 +228,11 @@ server <- function(input, output,session) {
     data
   }))# Filter data based on selections
   
+  output$table.comments <- renderText({
+    "This is the dataset we are working with. The user can select the variables of interest, and download the new dataset with the selected variables."
+  })
+  
+  
   output$summary <- renderPrint({
     data <- vino
     if (input$variant != "All") {
@@ -257,6 +253,11 @@ server <- function(input, output,session) {
     summary(data)
   })# Summary
   
+  output$summary.comments <- renderText({
+    "This is the output of the summary function in R. Here we can see which variables are factors and which are continuous. Those that are continuous are represented with their first quantile, their median, their third quantile, etc."
+  })
+  
+  #Second chapter: correlation plot
   selectedData2 <- reactive({
     dataW=vino %>% filter(Variant=="white")
     dataR=vino %>% filter(Variant=="red")
@@ -270,6 +271,10 @@ server <- function(input, output,session) {
       theme_minimal()
     ggplotly(p)
   })#Correlation plot
+  
+  output$correlation.comments=renderText({
+    "This is the correlation plot between two variables. The user can select the variables to plot and also the number of observations of each wine variant (red or white) in order to have cleaner plots."
+  })
   
   output$plot3 <- renderPlotly({
     
@@ -312,6 +317,10 @@ server <- function(input, output,session) {
       
     }
   })#Piechart variant
+  
+  output$taste.comments=renderText({
+    "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant."
+  })
   
   output$plot4 <- renderPlotly({
     
@@ -359,6 +368,9 @@ server <- function(input, output,session) {
     }
   })#Piechart quality
   
+  output$quality.comments=renderText({
+    "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant."
+  })
   
   output$plot5 <- renderPlotly({
     p <- ggplot(vino, aes(x = Variant)) + 
