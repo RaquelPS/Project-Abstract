@@ -19,28 +19,8 @@
 # install.packages("gridExtra")
 # install.packages("e1071")
 
-library(e1071)
-library(gridExtra)
-library(shinythemes)
-library(shinyLP)
-library(tidyverse)
-library(shiny)
-library(DT)
-library(mice)
-library(BH)
-library(ggplot2)
-library(scales)
-library(devtools)
-library(Rcpp)
-library(rCharts)
-require(markdown)
-require(data.table)
-library(dplyr)
-library(shinyjs)
-library(plotly)
-library(vembedr)
-library(caret)
-library(rpart)
+packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+lapply(packages, require, character.only = TRUE)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -125,17 +105,17 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               ),
                               
                               tabPanel("Correlation between properties",
-                                    fluidRow(   
-                                       column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
-                                       column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
-                                       column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="red")))),
-                                       column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="white"))))
-                                    ),
-                                    plotlyOutput('plot2'),
-                                    verbatimTextOutput("correlation.comments")
-                                    )
+                                       fluidRow(   
+                                         column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
+                                         column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
+                                         column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="red")))),
+                                         column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="white"))))
+                                       ),
+                                       plotlyOutput('plot2'),
+                                       verbatimTextOutput("correlation.comments")
+                              )
                             )#TABSET PANEL
                           )#MAIN PANEL
                  ),#TAB PANEL 2
@@ -186,7 +166,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               
                               tabPanel(p(icon("paperclip"),"Documentation"),
                                        #uiOutput("tab"),
-                                       includeMarkdown("About.md")
+                                       includeMarkdown("Documentation.md")
                               ),
                               
                               tabPanel(p(icon("file-alt"),'Report'),
@@ -437,7 +417,7 @@ In the right hand side we have also ploted a barplot to point out the same concl
       scale_fill_brewer(palette = "Set2") + 
       ylab("Number of wines") + 
       theme_minimal()
-      
+    
     p <- ggplotly(p)
     p
   })
@@ -488,7 +468,10 @@ In the right hand side we have also ploted a barplot to point out the same concl
     })
   })
   
+
   #First chapter: action button to download the dataset
+
+  #First chapter: download action button
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
@@ -524,14 +507,14 @@ In the right hand side we have also ploted a barplot to point out the same concl
       write.csv(vino, file, row.names = TRUE)
     }
   )
-
+  
   output$video <- renderUI({
-     HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
   })
   
   
-}#SERVER
+  }#SERVER
 
 # Run the application 
 shinyApp(ui = ui, server = server)
