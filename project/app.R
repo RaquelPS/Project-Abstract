@@ -58,8 +58,10 @@ scale_vino=vino %>% select(-Taste,-Variant)
 # for(i in 1:dim(vino)[2]){
 #   if(is.numeric(vino[,i])==TRUE) scale_vino=vino[,-i]
 # }
-# spl1 = createDataPartition(dataW$Variant, p = 0.7, list = FALSE) 
-# spl2 = createDataPartition(dataR$Variant, p = 0.3, list = FALSE) 
+# spl1 = createDataPartition(vino$Variant, p = 0.7, list = FALSE)
+# vino.train=vino[spl1,]
+# vino.test=vino[-spl1,]
+
 # 
 # a=vino[spl1,]
 # b=vino[spl2,]
@@ -182,11 +184,11 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        column(width=3,numericInput('sugarPred', 'Sugar desired', 6,
                                                                    min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1)),
                                        column(width=3,numericInput('phPred', 'pH desired', 3.5,
-                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01)
-                                       )
+                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01)),
+                                       actionButton("Enter", "Enter Values")
                                        )
                               ),
-                              verbatimTextOutput("pred")
+                              verbatimTextOutput("Pred")
                               
                               
                               # tabPanel('Vinho Verde k-means clustering',
@@ -547,16 +549,37 @@ server <- function(input, output,session) {
   }
   )
   
-  data1 <- reactive({
-    # req(input$gender)
-    data.frame(Taste=input$tastePred,
-               alcohol=input$alcoholPred)
+  observeEvent( input$Enter, {
+    Taste=as.factor(input$tastePred)
+    alcohol=input$alcoholPred
+    quality=input$qualityPred
+    fixed.acidity=input$acidityPred
+    residual.sugar=input$sugarPred
+    pH=input$phPred
+    # Taste="Balanced"
+    # alcohol=2
+    # quality=5
+    # fixed.acidity=13
+    # residual.sugar=10
+    # pH=5
+    data1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
+                       pH, quality, Taste)
+    
+    data.pred=vino[,c(1,4,9,11,12,13,14),]
+    mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
+    
+    output$Pred <- renderPrint({
+      predict(mymodel, data1)
+    })
   })
   
-  pred <- reactive({
-    predict(mymodel,data1())
-  })
-  output$pred <- renderPrint(pred())
+  
+  
+  
+  
+  
+  
+  
   
   #Selected data download
   output$downloadData <- downloadHandler(
