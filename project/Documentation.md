@@ -16,6 +16,6 @@ Modeling wine preferences by data mining from physicochemical properties. In Dec
 
 Note: The dataset is actually loaded from http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/perso.html, since it had additional information regarding the taste of the wine.
 
-Date updated: 28/03/2019
+Date updated: 29/03/2019
 
 About author: Raquel Parra Suazo and Shenbin Zheng, students of the master in Statistics for Data Science in the University Carlos III of Madrid.
