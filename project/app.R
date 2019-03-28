@@ -114,12 +114,14 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               
                               tabPanel("Properties",
                                        selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
-                                       plotlyOutput("plot7")       
+                                       plotlyOutput("plot7"),
+                                       verbatimTextOutput("property.comments")
                               ),
                               
                               tabPanel("Variant Comparison",
                                        selectInput("comp", label="Property" ,choices=c(unique(as.character(names(scale_vino))))),
-                                       plotlyOutput("plot8") 
+                                       plotlyOutput("plot8"),
+                                       verbatimTextOutput("comparison.comments")
                               ),
                               
                               tabPanel("Correlation between properties",
@@ -276,6 +278,7 @@ server <- function(input, output,session) {
     "This is the correlation plot between two variables. The user can select the variables to plot and also the number of observations of each wine variant (red or white) in order to have cleaner plots."
   })
   
+  #Second chapter: taste pie
   output$plot3 <- renderPlotly({
     
     if (input$taste.pie=="red"){
@@ -318,10 +321,25 @@ server <- function(input, output,session) {
     }
   })#Piechart variant
   
-  output$taste.comments=renderText({
-    "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant."
+  output$plot5 <- renderPlotly({
+    p <- ggplot(vino, aes(x = Variant)) + 
+      geom_bar(aes(y = ..count../sum(..count..), fill = Taste)) + 
+      scale_fill_brewer(palette = "Set3") + 
+      ylab("Percentage") + 
+      theme_minimal()+
+      ggtitle("Taste distribution in both variants")
+    
+    p <- ggplotly(p)
+    p
   })
   
+  output$taste.comments=renderText({
+    "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant.
+Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
+With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
+  })
+  
+  #Second chapter: quality pie
   output$plot4 <- renderPlotly({
     
     if (input$quality.pie=="red"){
@@ -368,22 +386,6 @@ server <- function(input, output,session) {
     }
   })#Piechart quality
   
-  output$quality.comments=renderText({
-    "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant."
-  })
-  
-  output$plot5 <- renderPlotly({
-    p <- ggplot(vino, aes(x = Variant)) + 
-      geom_bar(aes(y = ..count../sum(..count..), fill = Taste)) + 
-      scale_fill_brewer(palette = "Set3") + 
-      ylab("Percentage") + 
-      theme_minimal()+
-      ggtitle("Taste distribution in both variants")
-    
-    p <- ggplotly(p)
-    p
-  })
-  
   output$plot6 <- renderPlotly({
     vino$quality=as.factor(vino$quality)
     p <- ggplot(vino, aes(x = Variant)) + 
@@ -397,6 +399,12 @@ server <- function(input, output,session) {
     p
   })
   
+  output$quality.comments=renderText({
+    "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant.
+In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
+  })
+  
+  #Second chapter: boxplots of each variable
   output$plot7 <- renderPlotly({
     p<-ggplot(vino,aes_string(x="Taste",y=input$bp))+
       geom_boxplot(aes(color=Taste),outlier.shape = NA)+
@@ -406,6 +414,11 @@ server <- function(input, output,session) {
     p
   })
   
+  output$property.comments=renderText({
+    "Boxplot of each variables (wine characteristics) within each wine taste. We can see the median, the mean and other useful information."
+  })
+  
+  #Second chapter: variables comparison
   output$plot8 <- renderPlotly({
     p <- ggplot(vino, aes_string(x = input$comp)) + 
       geom_bar(aes(y = ..count.., fill = Variant)) +
@@ -415,6 +428,10 @@ server <- function(input, output,session) {
       
     p <- ggplotly(p)
     p
+  })
+  
+  output$comparison.comments=renderText({
+    "We want to represent here the density form of each variables and to notice the differences, if there are any, between both wine variant (red and white)."
   })
   
   data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
