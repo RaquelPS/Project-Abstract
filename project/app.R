@@ -186,10 +186,11 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                                    min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1)),
                                        column(width=3,numericInput('phPred', 'pH desired', 3.5,
                                                                    min = min(vino$pH), max = max(vino$pH),step=0.01)),
-                                       actionButton("Enter", "Enter Values")
+                                       actionButton("Enter", "Enter Values"),
+                                       verbatimTextOutput("Pred")
                                        )
-                              ),
-                              verbatimTextOutput("Pred")
+                                       )
+                              
                               
                               
                               # tabPanel('Vinho Verde k-means clustering',
@@ -550,6 +551,11 @@ server <- function(input, output,session) {
   }
   )
   
+  
+  data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
+                              "alcohol", "quality", "Variant","Taste"))
+  mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
+  
   observeEvent( input$Enter, {
     Taste=as.factor(input$tastePred)
     alcohol=input$alcoholPred
@@ -557,23 +563,17 @@ server <- function(input, output,session) {
     fixed.acidity=input$acidityPred
     residual.sugar=input$sugarPred
     pH=input$phPred
-    # Taste="Balanced"
-    # alcohol=2
-    # quality=5
-    # fixed.acidity=2
-    # residual.sugar=10
-    # pH=5
-    data1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
+    
+    data.pred1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
                        pH, quality, Taste)
     
-    data.pred=vino[,c(1,4,9,11,12,13,14),]
-    mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
-    
     output$Pred <- renderPrint({
-      x=predict(mymodel, data1)
-      x[,which.max(x)]
+      predict(mymodel, data.pred1)
     })
-  })
+    })
+    
+    
+  
   
   
   
