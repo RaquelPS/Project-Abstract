@@ -1,12 +1,10 @@
+################################################# 
+# SHINY APP - RAQUEL PARRA SUAZO, SHENBIN ZHENG #
+#################################################
 
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+############
+# PACKAGES #
+############
 
 # install.packages("devtools")
 # install.packages("Rcpp")
@@ -19,8 +17,14 @@
 # install.packages("gridExtra")
 # install.packages("e1071")
 
-packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT",
+             "mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown",
+             "data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
 lapply(packages, require, character.only = TRUE)
+
+######################
+# SOME PREPROCESSING #
+######################
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -31,7 +35,11 @@ vino=vino %>%  drop_na()
 var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
 scale_vino=vino %>% select(-Taste,-Variant)
 
-# Define UI for application that draws a histogram
+
+######################
+######## UI ##########
+######################
+
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  theme = shinytheme("cerulean"),
                  #shinythemes::themeSelector(),
@@ -77,7 +85,6 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           mainPanel(
                             tabsetPanel(
                               tabPanel("Taste",
-                                       
                                        selectInput('taste.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width = 6, class = "well",plotlyOutput('plot3')),                              
                                        column(width = 6, class = "well",plotlyOutput("plot5")),
@@ -85,7 +92,6 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               ),
                               
                               tabPanel("Quality",
-                                       
                                        selectInput('quality.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width=6,class="well",plotlyOutput('plot4')),
                                        column(width=6,class="well",plotlyOutput('plot6')),
@@ -139,21 +145,17 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                                     min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1),
                                                        numericInput('phPred', 'pH desired', 3.5,
                                                                     min = min(vino$pH), max = max(vino$pH),step=0.01),
-                                                       actionButton("Enter", "Enter Values")
-                                                       
-                                                       
+                                                       actionButton("Enter", "Show me!")
                                                      ),
                                                      fluidPage(
                                                        verbatimTextOutput("Pred"),
                                                        verbatimTextOutput("Pred.comments"),
                                                        uiOutput("buy")
                                                      )
-                                       )
+                                                  )
                                      )#MAIN PANEL
-                            )
-                            
-                            
-                          )#TABSET PANEL
+                            )#TAB PANEL  
+                        )#TABSET PANEL
                           
                  ),#TABPANEL 3
                  
@@ -166,7 +168,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               
                               tabPanel(p(icon("paperclip"),"Documentation"),
                                        #uiOutput("tab"),
-                                       includeMarkdown("About.md")
+                                       includeMarkdown("Documentation.md")
                               ),
                               
                               tabPanel(p(icon("file-alt"),'Report'),
@@ -181,12 +183,10 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
 )#UI
 
 
-#############################################################################################################
-#############################################################################################################
-#############################################################################################################
+######################
+###### SERVER ########
+######################
 
-
-# Define server logic required to draw a histogram
 server <- function(input, output,session) {
   
   #First chapter: data exploration and summary
@@ -510,7 +510,6 @@ server <- function(input, output,session) {
   })
   
   
-  }#SERVER
+}#SERVER
 
-# Run the application 
 shinyApp(ui = ui, server = server)
