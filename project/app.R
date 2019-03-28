@@ -421,7 +421,6 @@ In the right hand side we have also ploted a barplot to point out the same concl
   output$plot7 <- renderPlotly({
     p<-ggplot(vino,aes_string(x="Taste",y=input$bp))+
       geom_boxplot(aes(color=Taste),outlier.shape = NA)+
-      scale_fill_brewer(palette = "Set3")+
       theme_minimal()
     p<-ggplotly(p)
     p
@@ -447,6 +446,7 @@ In the right hand side we have also ploted a barplot to point out the same concl
     "We want to represent here the density form of each variables and to notice the differences, if there are any, between both wine variant (red and white)."
   })
   
+  #Third chapter: prediction model
   data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
                               "alcohol", "quality", "Variant", "Taste"))
   mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
@@ -488,6 +488,7 @@ In the right hand side we have also ploted a barplot to point out the same concl
     })
   })
   
+  #First chapter: download action button
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
