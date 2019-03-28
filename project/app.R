@@ -41,6 +41,9 @@ library(plotly)
 library(vembedr)
 library(caret)
 library(rpart)
+packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+lapply(packages, require, character.only = TRUE)
+
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -171,38 +174,40 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  ),#TAB PANEL 2
                  
                  tabPanel(p(icon("wine-glass-alt") ,"Predictive model"),
-                          mainPanel(
+                          
                             tabsetPanel(
                               tabPanel("What's the perfect wine for the ocassion?",
-                                       fluidRow(
-                                       column(width=3,selectInput('tastePred', label = 'Taste desired', choices = unique(as.character(vino$Taste)))),
-                                       column(width=3,numericInput('alcoholPred', 'Grades of alcohol desired', 10,
-                                                                   min = min(vino$alcohol), max = max(vino$alcohol),step=0.1)),
-                                       column(width=3,numericInput('qualityPred', 'Quality desired', 6,
-                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1)),
-                                       column(width=3,numericInput('acidityPred', 'Acidity desired', 6,
-                                                                          min = min(vino$fixed.acidity), max = max(vino$fixed.acidity),step=0.1)),
-                                       column(width=3,numericInput('sugarPred', 'Sugar desired', 6,
-                                                                   min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1)),
-                                       column(width=3,numericInput('phPred', 'pH desired', 3.5,
-                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01)),
+                                  mainPanel(
+                                    sidebarLayout(position="left",
+                                  
+                                    sidebarPanel(
+                                       selectInput('tastePred', label = 'Taste desired', choices = unique(as.character(vino$Taste))),
+                                       numericInput('alcoholPred', 'Grades of alcohol desired', 10,
+                                                                   min = min(vino$alcohol), max = max(vino$alcohol),step=0.1),
+                                       numericInput('qualityPred', 'Quality desired', 6,
+                                                                          min = min(vino$quality), max = max(vino$quality),step=0.1),
+                                       numericInput('acidityPred', 'Acidity desired', 6,
+                                                                          min = min(vino$fixed.acidity), max = max(vino$fixed.acidity),step=0.1),
+                                       numericInput('sugarPred', 'Sugar desired', 6,
+                                                                   min = min(vino$residual.sugar), max = max(vino$residual.sugar),step=0.1),
+                                       numericInput('phPred', 'pH desired', 3.5,
+                                                                   min = min(vino$pH), max = max(vino$pH),step=0.01),
                                        actionButton("Enter", "Enter Values")
-                                       )
-                              ),
-                              verbatimTextOutput("Pred")
+                                       
+                                       
+                                    ),
+                                    fluidPage(
+                                    verbatimTextOutput("Pred"),
+                                    verbatimTextOutput("Pred.comments"),
+                                    uiOutput("buy")
+                                    )
+                                  )
+                                 )#MAIN PANEL
+                              )
                               
-                              
-                              # tabPanel('Vinho Verde k-means clustering',
-                              #          selectInput('xcol', 'X Variable', names(vino)),
-                              #          selectInput('ycol', 'Y Variable', names(vino),
-                              #                      selected=names(vino)[[2]]),
-                              #          numericInput('clusters', 'Cluster count', 3,
-                              #                       min = 1, max = 9),
-                              #          plotOutput('plot1')
-                              # )
                               
                             )#TABSET PANEL
-                          )#MAIN PANEL
+                          
                  ),#TABPANEL 3
                  
                  tabPanel(p(icon("link"),"More"),
@@ -557,23 +562,38 @@ server <- function(input, output,session) {
     fixed.acidity=input$acidityPred
     residual.sugar=input$sugarPred
     pH=input$phPred
-    # Taste="Balanced"
-    # alcohol=2
-    # quality=5
-    # fixed.acidity=2
-    # residual.sugar=10
-    # pH=5
-    data1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
-                       pH, quality, Taste)
     
-    data.pred=vino[,c(1,4,9,11,12,13,14),]
-    mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
+    data.pred1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
+                            pH, quality, Taste)
     
-    output$Pred <- renderPrint({
-      x=predict(mymodel, data1)
-      x[,which.max(x)]
+    output$Pred <- renderText({
+      x=predict(mymodel, data.pred1)
+      if(which.max(x)==1) print("Red")
+      else print("White")
     })
+      
+      output$Pred.comments=renderText({
+        x=predict(mymodel, data.pred1)
+        
+        if(which.max(x)==1) print("Red Vinho Verde wines are an intense red color, 
+                                  sometimes with a pink or bright red foam, and with a vinous aroma, 
+                                  especially of berries. In the mouth it is fresh and intense, 
+                                  and a very good food wine.")
+        else print("White Vinho Verde wines are citrus or straw-colored with rich,
+                   fruity and floral aromas, depending on the grapes that are used. 
+                   They have a balanced palate, and are intense and very refreshing.")
+  
+      })
+      
+      output$buy <- renderUI({
+        url1 <- a("Red wine shopping!", href="https://www.portugalvineyards.com/es/s/274/vinho-verde#s[7][]:690&s[6][]:522&s[8][]:&rg:&sid:1&h:leftColumn&id_seo:274")
+        url2 <- a("White wine shopping!", href="https://www.portugalvineyards.com/es/s/274/vinho-verde#s[7][]:700&s[6][]:522&s[8][]:&rg:&sid:1&h:leftColumn&id_seo:274")
+        if(which.max(x)==1) tagList(div("Where to buy:"),div(url1))
+        else tagList(div("Where to buy:"),div(url2))
+        
+      })
   })
+  
   
   
   
@@ -628,13 +648,7 @@ server <- function(input, output,session) {
     #tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
   })
   
-  # output$tab <- renderUI({
-  #   url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   url1 <- a("UCI sdfgds Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   url2 <- a("UCI dsdsb Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   tagList(div("URL link:", url),div("URL link:", url1),div("URL link:", url2))
-  #   
-  # })
+
   
 }#SERVER
 
