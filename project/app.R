@@ -47,38 +47,9 @@ url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerde
 vino=read.csv(url,header=TRUE,sep=";")
 vino <- as_tibble(vino)
 vino=vino %>%select(-starts_with("X"))
-# vino=vino %>% select('fixed.acidity','volatile.acidity',"citric.acid","residual.sugar","chlorides",
-#                      "free.sulfur.dioxide","total.sulfur.dioxide","density","pH",
-#                      "sulphates","alcohol", "quality", "Variant", "Taste")
 vino=vino %>%  drop_na()
 var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
 scale_vino=vino %>% select(-Taste,-Variant)
-#scale_vino=as.data.frame(scale(scale_vino))
-#scale_vino=merge(scale_vino,vino[,c("Taste","Variant")])
-# PUT THE SCALE IN THE CORRECT WAY
-# for(i in 1:dim(vino)[2]){
-#   if(is.numeric(vino[,i])==TRUE) scale_vino=vino[,-i]
-# }
-# spl1 = createDataPartition(vino$Variant, p = 0.7, list = FALSE)
-# vino.train=vino[spl1,]
-# vino.test=vino[-spl1,]
-
-# 
-# a=vino[spl1,]
-# b=vino[spl2,]
-# 
-# dim(a)[1]+dim(b)[1]
-
-#as.factor(vino$quality)
-
-
-########## PREDICTIVE???
-# mymodel<-svm(as.factor(Variant)~., data=vino, kernel="radial")
-# mydata=data.frame(Taste="Sweet",alcohol=10,fixed.acidity=7.4,volatile.acidity=0.58,citric.acid=0.18,
-#                   residual.sugar=1.70,chlorides=0.114,free.sulfur.dioxide=9, total.sulfur.dioxide=145, density=0.9974,
-#                   pH=3.11, sulphates=0.52, quality=9)
-# predict(mymodel,mydata)
-
 
 # Define UI for application that draws a histogram
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
@@ -104,7 +75,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                           
                                           checkboxGroupInput("checkGroup3", label = ("Aditional Variables"),
                                                              choices = c(unique(as.character(names(vino))))),
-                                          ###,"Variant","pH","quality"
+                                          
                                           checkboxInput("all2","Select All/None", value=TRUE),
                                           
                                           # Download Button
@@ -123,11 +94,6 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  ),#TAB PANEL 1
                  
                  tabPanel(p(icon("bar-chart-o"),"Data Visualization"),
-                          # checkboxGroupInput("checkGroup", label = h3("Properties"), 
-                          #                    choices = c("All",unique(as.character(names(vino))),"Clear All"),
-                          #                    selected = c("All",unique(as.character(names(vino))),"Clear All")),
-                          # verbatimTextOutput("property")
-                          
                           mainPanel(
                             tabsetPanel(
                               tabPanel("Taste",
@@ -256,7 +222,6 @@ server <- function(input, output,session) {
     data <- vino
     if (input$variant != "All") {
       data=data %>% filter(Variant %in% input$variant)
-      #data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
@@ -269,8 +234,6 @@ server <- function(input, output,session) {
     
     #Choose the corresponding additional variables
     data=data %>% select(input$checkGroup3)
-    #data=data[,input$checkGroup3]
-    
     data
   }))# Filter data based on selections
   
@@ -278,7 +241,6 @@ server <- function(input, output,session) {
     data <- vino
     if (input$variant != "All") {
       data=data %>% filter(Variant %in% input$variant)
-      #data <- data[data$Variant == input$variant,]
     }
     
     #Choose the correct alcohol interval
@@ -288,7 +250,6 @@ server <- function(input, output,session) {
     
     #Choose the corresponding taste observations
     data=data %>% filter(Taste %in% input$checkGroup2)
-    #data=data[data$Taste == input$checkGroup2,]
     
     #Choose the corresponding additional variables
     data=data %>% select(input$checkGroup3)
@@ -305,7 +266,6 @@ server <- function(input, output,session) {
   output$plot2 <- renderPlotly({
     p=ggplot(selectedData2(), aes_string(x=input$xcol1, y=input$ycol1, color=selectedData2()$Taste)) +
       geom_point(size=2, shape=23)+
-     # scale_fill_brewer(palette = "Set3")+
       geom_smooth(method="lm", se=TRUE, fullrange=TRUE)+
       theme_minimal()
     ggplotly(p)
@@ -315,27 +275,17 @@ server <- function(input, output,session) {
     
     if (input$taste.pie=="red"){
       
-      # x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="red")
-      # x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="red")
-      # x3=sum((vino$Taste)=="Low acid" & (vino$Variant)=="red")
-      # x4=sum((vino$Taste)=="Sweet" & (vino$Variant)=="red")
-      # x5=sum((vino$Taste)=="Very low acid" & (vino$Variant)=="red")
       x1=nrow(vino %>% filter(Taste== 'Balanced', Variant=="red")) 
       x2=nrow(vino %>% filter(Taste== 'Light-Bodied', Variant=="red")) 
       x3=nrow(vino %>% filter(Taste== 'Low acid', Variant=="red"))
       x4=nrow(vino %>% filter(Taste== 'Sweet', Variant=="red"))
       x5=nrow(vino %>% filter(Taste== 'Very low acid', Variant=="red"))
-      #total.red=sum((vino$Variant)=="red")
+      
       total.red=nrow(vino %>% filter(Variant=="red"))
       value = c(x1,x2,x3,x4,x5)/total.red
       
       df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
                        value = c(x1,x2,x3,x4,x5)/total.red)
-      # ggplot(df, aes(x="", y=value, fill=Taste))+
-      #   geom_bar(width = 1, stat = "identity")+
-      #   coord_polar("y", start=0)+
-      #   geom_text(aes(y = value), 
-      #                 label = percent(value), size=3) 
       
       plot_ly(df, labels = ~Taste, values = ~value, type = 'pie',colors ="Set3") %>%
         layout(title = 'Taste distribution in the red variant',
@@ -343,13 +293,6 @@ server <- function(input, output,session) {
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
     }else if (input$taste.pie=="white"){
-      
-      # x1=sum((vino$Taste)=="Balanced" & (vino$Variant)=="white")
-      # x2=sum((vino$Taste)=="Light-Bodied" & (vino$Variant)=="white")
-      # x3=sum((vino$Taste)=="Low acid" & (vino$Variant)=="white")
-      # x4=sum((vino$Taste)=="Sweet" & (vino$Variant)=="white")
-      # x5=sum((vino$Taste)=="Very low acid" & (vino$Variant)=="white")
-      # total.white=sum((vino$Variant)=="white")
       
       x1=nrow(vino %>% filter(Taste== 'Balanced', Variant=="white")) 
       x2=nrow(vino %>% filter(Taste== 'Light-Bodied', Variant=="white")) 
@@ -361,11 +304,6 @@ server <- function(input, output,session) {
       
       df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", "Sweet", "Very low acid"),
                        value = c(x1,x2,x3,x4,x5)/total.white)
-      # ggplot(df, aes(x="", y=value, fill=Taste))+
-      #   geom_bar(width = 1, stat = "identity")+
-      #   coord_polar("y", start=0)+
-      #   geom_text(aes(y = value), 
-      #             label = percent(value), size=3) 
       
       plot_ly(df, labels = ~Taste, values = ~value, type = 'pie',colors="Set3") %>%
         layout(title = 'Taste distribution in the white variant',
@@ -378,15 +316,6 @@ server <- function(input, output,session) {
   output$plot4 <- renderPlotly({
     
     if (input$quality.pie=="red"){
-      
-      # x3=sum((vino$quality)==3 & (vino$Variant)=="red")
-      # x4=sum((vino$quality)==4 & (vino$Variant)=="red")
-      # x5=sum((vino$quality)==5 & (vino$Variant)=="red")
-      # x6=sum((vino$quality)==6 & (vino$Variant)=="red")
-      # x7=sum((vino$quality)==7 & (vino$Variant)=="red")
-      # x8=sum((vino$quality)==8 & (vino$Variant)=="red")
-      # x9=sum((vino$quality)==9 & (vino$Variant)=="red")
-      # total.red=sum((vino$Variant)=="red")
       
       x3=nrow(vino %>% filter(quality== 3, Variant=="red"))
       x4=nrow(vino %>% filter(quality== 4, Variant=="red"))
@@ -402,27 +331,12 @@ server <- function(input, output,session) {
                                    "Quality=7","Quality=8","Quality=9"),
                        value = c(x3,x4,x5,x6,x7,x8,x9)/total.red)
       
-      # ggplot(df, aes(x="", y=value, fill=Quality))+
-      #   geom_bar(width = 1, stat = "identity")+
-      #   coord_polar("y", start=0)+
-      #   geom_text(aes(y = value), 
-      #             label = percent(value), size=3) 
-      
       plot_ly(df, labels = ~Quality, values = ~value, type = 'pie',colors="Set3") %>%
         layout(title = 'Quality distribution in the red variant',
                xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
       
     }else if (input$quality.pie=="white"){
-      
-      # x3=sum((vino$quality)==3 & (vino$Variant)=="white")
-      # x4=sum((vino$quality)==4 & (vino$Variant)=="white")
-      # x5=sum((vino$quality)==5 & (vino$Variant)=="white")
-      # x6=sum((vino$quality)==6 & (vino$Variant)=="white")
-      # x7=sum((vino$quality)==7 & (vino$Variant)=="white")
-      # x8=sum((vino$quality)==8 & (vino$Variant)=="white")
-      # x9=sum((vino$quality)==9 & (vino$Variant)=="white")
-      # total.white=sum((vino$Variant)=="white")
       
       x3=nrow(vino %>% filter(quality== 3, Variant=="white"))
       x4=nrow(vino %>% filter(quality== 4, Variant=="white"))
@@ -437,12 +351,6 @@ server <- function(input, output,session) {
       df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", "Quality=6", 
                                    "Quality=7","Quality=8","Quality=9"),
                        value = c(x3,x4,x5,x6,x7,x8,x9)/total.white)
-      
-      # ggplot(df, aes(x="", y=value, fill=Quality))+
-      #   geom_bar(width = 1, stat = "identity")+
-      #   coord_polar("y", start=0)+
-      #   geom_text(aes(y = value), 
-      #             label = percent(value), size=3) 
       
       plot_ly(df, labels = ~Quality, values = ~value, type = 'pie', colors="Set1") %>%
         layout(title = 'Quality distribution in the white variant',
@@ -484,9 +392,6 @@ server <- function(input, output,session) {
       theme_minimal()
     p<-ggplotly(p)
     p
-    # p <- plot_ly(vino, x = ~Taste, y = ~input$bp, color = ~Taste, type = "box") %>%
-    #   layout(boxmode = "group")
-    # p
   })
   
   output$plot8 <- renderPlotly({
@@ -495,65 +400,13 @@ server <- function(input, output,session) {
       scale_fill_brewer(palette = "Set2") + 
       ylab("Number of wines") + 
       theme_minimal()
-      #ggtitle("Show precentages in bar chart")
-    
+      
     p <- ggplotly(p)
     p
   })
-    
-  # output$distPlot <- renderPlot({
-  #   # generate bins based on input$bins from ui.Rt
-  #   x    <- faithful[, 2] 
-  #   bins <- seq(min(x), max(x), length.out = input$bins + 1)
-  #   
-  #   # draw the histogram with the specified number of bins
-  #   hist(x, breaks = bins, col = 'darkgray', border = 'white')
-  # })
-  
-  
-  # output$property <- renderPrint({input$checkGroup})
-  
-  
-  # output$property <- renderPlot({
-  #  data <- vino
-  #  if (input$Taste == "All") {
-  #    # draw the histogram with the specified number of bins
-  #    hist(data[], col = 'darkgray', border = 'white')
-  #  }
-  #  if (input$Taste != "All") {
-  #    data <- data[data$Taste == input$Taste,]
-  #    # draw the histogram with the specified number of bins
-  #    hist(data, col = 'darkgray', border = 'white')
-  #   }
-  # 
-  # 
-  # })
-  
-  
-  # Combine the selected variables into a new data frame
-  selectedData <- reactive({
-    vino[, c(input$xcol, input$ycol)]
-  })
-  
-  clusters <- reactive({
-    kmeans(selectedData(), input$clusters)
-  })
-  
-  output$plot1 <- renderPlot({
-    palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-              "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
-    
-    par(mar = c(5.1, 4.1, 0, 1))
-    plot(selectedData(),
-         col = clusters()$cluster,
-         pch = 20, cex = 0.5)
-    points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
-  }
-  )
-  
   
   data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
-                              "alcohol", "quality", "Variant","Taste"))
+                              "alcohol", "quality", "Variant", "Taste"))
   mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
   
   observeEvent( input$Enter, {
@@ -571,17 +424,6 @@ server <- function(input, output,session) {
       predict(mymodel, data.pred1)
     })
     })
-    
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   #Selected data download
   output$downloadData <- downloadHandler(
@@ -604,7 +446,6 @@ server <- function(input, output,session) {
       
       #Choose the corresponding additional variables
       data=data %>% select(input$checkGroup3)
-      #data=data[,input$checkGroup3]
       
       write.csv(data, file, row.names = TRUE)
     }
@@ -623,18 +464,8 @@ server <- function(input, output,session) {
   output$video <- renderUI({
      HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
-    # iframe(width = "560", height = "315",
-           # url_link = "https://www.youtube.com/watch?v=IXeNuHpOhHM")
-    #tags$video(src = "https://www.youtube.com/watch?v=IXeNuHpOhHM", type = "video/mp4", autoplay = NA, controls = NA)
   })
   
-  # output$tab <- renderUI({
-  #   url <- a("UCI Machine Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   url1 <- a("UCI sdfgds Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   url2 <- a("UCI dsdsb Learning Repository", href="https://archive.ics.uci.edu/ml/datasets/wine+quality")
-  #   tagList(div("URL link:", url),div("URL link:", url1),div("URL link:", url2))
-  #   
-  # })
   
 }#SERVER
 
