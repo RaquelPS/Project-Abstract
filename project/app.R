@@ -19,28 +19,8 @@
 # install.packages("gridExtra")
 # install.packages("e1071")
 
-library(e1071)
-library(gridExtra)
-library(shinythemes)
-library(shinyLP)
-library(tidyverse)
-library(shiny)
-library(DT)
-library(mice)
-library(BH)
-library(ggplot2)
-library(scales)
-library(devtools)
-library(Rcpp)
-library(rCharts)
-require(markdown)
-require(data.table)
-library(dplyr)
-library(shinyjs)
-library(plotly)
-library(vembedr)
-library(caret)
-library(rpart)
+packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+lapply(packages, require, character.only = TRUE)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -125,17 +105,17 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               ),
                               
                               tabPanel("Correlation between properties",
-                                    fluidRow(   
-                                       column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
-                                       column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
-                                       column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="red")))),
-                                       column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
-                                                    min = 1, max = nrow(vino %>% filter(Variant=="white"))))
-                                    ),
-                                    plotlyOutput('plot2'),
-                                    verbatimTextOutput("correlation.comments")
-                                    )
+                                       fluidRow(   
+                                         column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
+                                         column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
+                                         column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="red")))),
+                                         column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
+                                                                     min = 1, max = nrow(vino %>% filter(Variant=="white"))))
+                                       ),
+                                       plotlyOutput('plot2'),
+                                       verbatimTextOutput("correlation.comments")
+                              )
                             )#TABSET PANEL
                           )#MAIN PANEL
                  ),#TAB PANEL 2
@@ -348,8 +328,8 @@ server <- function(input, output,session) {
   
   output$taste.comments=renderText({
     "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant.
-Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
-With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
+    Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
+    With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
   })
   
   #Second chapter: quality pie
@@ -414,7 +394,7 @@ With this barplot we also wanted to represent the large different of amount of d
   
   output$quality.comments=renderText({
     "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant.
-In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
+    In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
   })
   
   #Second chapter: boxplots of each variable
@@ -438,7 +418,7 @@ In the right hand side we have also ploted a barplot to point out the same concl
       scale_fill_brewer(palette = "Set2") + 
       ylab("Number of wines") + 
       theme_minimal()
-      
+    
     p <- ggplotly(p)
     p
   })
@@ -523,14 +503,14 @@ In the right hand side we have also ploted a barplot to point out the same concl
       write.csv(vino, file, row.names = TRUE)
     }
   )
-
+  
   output$video <- renderUI({
-     HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
+    HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
   })
   
   
-}#SERVER
+  }#SERVER
 
 # Run the application 
 shinyApp(ui = ui, server = server)
