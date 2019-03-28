@@ -1,0 +1,161 @@
+---
+title: "Vinho Verde wine report"
+author: "Raquel Parra Suazo & Shenbin Zheng"
+date: "March 28, 2019"
+output:
+  html_document:
+    toc: yes
+  pdf_document: default
+  word_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT","mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown","data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+lapply(packages, require, character.only = TRUE)
+```
+
+## Introduction 
+
+This Shiny App is for searching, visualizating and extracting useful information about the Portuguese Vinho Verde wine variety. Our aim was to create a way for the user to understand this kind of wine and help them choose the correct variant to combine with their food by means of a predictive model (decision tree).
+
+The dataset used is related to red and white variants of the Portuguese "Vinho Verde" wine. The total number of observations is 6497 and from those 6031 had the complete necessary information in order to develop the app (Note that the proportion of white wines is much higher that the red wines one).
+
+## Data Description
+
+As we said, the dataset is related to red and white variants of the Portuguese "Vinho Verde" wine. The total number of observations is 6497 where 6031 were useful for developing the app. The proportion of white wines is much higher that the red wines one. In fact, within 6031 observations there are 1570 red wines and 4461 white wines.
+
+```{r data_load}
+url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
+
+vino=read.csv(url,header=TRUE,sep=";")
+vino <- as_tibble(vino)
+vino=vino %>%select(-starts_with("X"))
+vino=vino %>%  drop_na()
+var_vino=vino %>% select(-Taste,-pH,-Variant,-quality)
+scale_vino=vino %>% select(-Taste,-Variant)
+```
+
+## Data exploration
+
+First of all, we would like to know what variables does the dataset contain.  
+
+```{r exploration}
+head(vino)
+str(vino)
+```
+
+From the output above we know that we have 14 variables in total, where 2 variables ("Variant" and "Taste") are factors and the rest numerical variables. The function **summary()** also provide us useful information: 
+
+```{r exploration2}
+summary(vino)
+```
+
+Here we can see "the distribution" of each variable: where is the median, the mean, the first quantile, etc.
+
+## Data representation
+
+We aim to understand better the variables by means of ploting several graphs. We will focus on white wines, since it has more observations, but in the Shiny App we have develop the plots intectively, so that the user can select which wine variant want to represent.
+
+First of all, we have ploted several pie charts to see the distribution of "Taste" and "Quality":
+
+```{r piechar}
+#Taste distribution
+x1=nrow(vino %>% filter(Taste== 'Balanced', Variant=="white")) 
+x2=nrow(vino %>% filter(Taste== 'Light-Bodied', Variant=="white")) 
+x3=nrow(vino %>% filter(Taste== 'Low acid', Variant=="white"))
+x4=nrow(vino %>% filter(Taste== 'Sweet', Variant=="white"))
+x5=nrow(vino %>% filter(Taste== 'Very low acid', Variant=="white"))
+total.white=nrow(vino %>% filter(Variant=="white"))
+value = c(x1,x2,x3,x4,x5)/total.white
+      
+df <- data.frame(Taste = c("Balanced", "Light-Bodied", "Low acid", 
+                           "Sweet", "Very low acid"),
+                 value = c(x1,x2,x3,x4,x5)/total.white)
+      
+plot_ly(df, labels = ~Taste, values = ~value, type = 'pie',colors="Set3") %>%
+  layout(title = 'Taste distribution in the white variant',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+    
+#Quality distribution
+x3=nrow(vino %>% filter(quality== 3, Variant=="white"))
+x4=nrow(vino %>% filter(quality== 4, Variant=="white"))
+x5=nrow(vino %>% filter(quality== 5, Variant=="white"))
+x6=nrow(vino %>% filter(quality== 6, Variant=="white"))
+x7=nrow(vino %>% filter(quality== 7, Variant=="white"))
+x8=nrow(vino %>% filter(quality== 8, Variant=="white"))
+x9=nrow(vino %>% filter(quality== 9, Variant=="white"))
+total.white=nrow(vino %>% filter(Variant=="white"))
+value = c(x3,x4,x5,x6,x7,x8,x9)/total.white
+      
+df <- data.frame(Quality = c("Quality=3", "Quality=4", "Quality=5", 
+                             "Quality=6", "Quality=7","Quality=8","Quality=9"),
+                 value = c(x3,x4,x5,x6,x7,x8,x9)/total.white)
+      
+plot_ly(df, labels = ~Quality, values = ~value, type = 'pie', colors="Set1") %>%
+  layout(title = 'Quality distribution in the white variant',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
+
+After that, several boxplot to check any significant values such as where is the mean of each variable and split up into the 6 tastes that we have. Here we will represent only one boxplot, corresponding to the variable "fixed.acidity":
+
+```{r boxplot}
+p<-ggplot(vino,aes_string(x="Taste",y=vino$fixed.acidity))+
+      geom_boxplot(aes(color=Taste),outlier.shape = NA)+
+      theme_minimal()
+p<-ggplotly(p)
+p
+```
+
+The next plot we have done is somehow a density plot of each variable and differenced according to the 2 wine variants that we have. Again, we will focus only on one variable, which is "fixed.acidity":
+
+```{r density, warning=FALSE}
+p <- ggplot(vino, aes_string(x = vino$fixed.acidity)) + 
+      geom_bar(aes(y = ..count.., fill = Variant)) +
+      scale_fill_brewer(palette = "Set2") + 
+      ylab("Number of wines") + 
+      theme_minimal()
+      
+p <- ggplotly(p)
+p
+```
+
+And a final plot which is a correlation plot between variables and each point is filled with colors according to which taste it belongs. We will represent here the correlation plot in "fixed.acidity", which will be a lineal plot because the correlation coefficient between one variable with itself is 1:
+
+```{r correlation, warning=FALSE}
+p=ggplot(vino, aes_string(x=vino$fixed.acidity, y=vino$fixed.acidity,
+                          color=vino$Taste)) +
+  geom_point(size=2, shape=23)+
+  geom_smooth(method="lm", se=TRUE, fullrange=TRUE)+
+  theme_minimal()
+ggplotly(p)
+```
+
+As stated before, our final aim is to predict the wine variant (binary prediction) that the user desires according to his/her interests. We have created the model based on the decision tree model and we will check that the performance of this model is very good (with high prediction accuracy). 
+
+```{r prediction}
+#DT: Decision Tree
+
+#New dataset with the most important variables
+data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
+                              "alcohol", "quality", "Variant", "Taste"))
+
+#Split up the dataset into two parts: one for training and one for testing
+spl1 = createDataPartition(data.pred$Variant, p = 0.7, list = FALSE)
+vino.train=data.pred[spl1,]
+vino.test=data.pred[-spl1,]
+
+#Fit the model with these important variables
+mymodel<-rpart(as.factor(Variant)~., method="class", data = vino.train)
+pred=predict(mymodel, data.pred)
+mymodel.prob <- predict(mymodel, vino.test, type="prob")
+threshold=1570/(1570+4461)
+mymodel.pred = rep("red", nrow(vino.test))
+mymodel.pred[which(mymodel.prob[,2] > threshold)] = "white"
+confusionMatrix(factor(mymodel.pred),vino.test$Variant)
+```
+
+As we can see, the prediction accuracy is around 90%, which is a very high accuracy.
