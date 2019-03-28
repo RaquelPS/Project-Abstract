@@ -40,6 +40,7 @@ library(shinyjs)
 library(plotly)
 library(vembedr)
 library(caret)
+library(rpart)
 
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
 
@@ -559,7 +560,7 @@ server <- function(input, output,session) {
     # Taste="Balanced"
     # alcohol=2
     # quality=5
-    # fixed.acidity=13
+    # fixed.acidity=2
     # residual.sugar=10
     # pH=5
     data1 = data.frame(fixed.acidity, residual.sugar, alcohol, 
@@ -569,7 +570,8 @@ server <- function(input, output,session) {
     mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
     
     output$Pred <- renderPrint({
-      predict(mymodel, data1)
+      x=predict(mymodel, data1)
+      x[,which.max(x)]
     })
   })
   
