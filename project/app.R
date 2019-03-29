@@ -483,7 +483,6 @@ You can see which quality is the most common within the selected variant of wine
       
     })
   })
-  
 
   #First chapter: action button to download the dataset
 

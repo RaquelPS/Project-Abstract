@@ -1,5 +1,4 @@
 
-
 Master Title: Master in Statistics for Data Science
 
 Course title: Data tidying and Reporting

@@ -5,9 +5,9 @@ The dataset used is related to red and white variants of the Portuguese "Vinho V
 
 In the first tab we can see a table containing the information chosen by the user, as well as a summary that helps us understand the units and ranges of each variable.
 
-In the data visualization tab, we dispayed some plots representing the distribution of each variant of wine, in order for the user to have an idea of the taste and the quality proportions of the wines in general. Regarding the properties of these wines, we ploted a boxplot (which could be seen as a complement to the summary previously done), a bar plot showing the distribution of each property (differentiating between red and white variants), and a correlation plot that shows how usually the amount of each property makes another one's amount grow bigger/smaller or stay the same.
+In the second tab, we dispayed some plots representing the distribution of each variant of wine, in order for the user to have an idea of the taste and the quality proportions of the wines in general. Regarding the properties of these wines, we ploted a boxplot (which could be seen as a complement to the summary previously done), a bar plot showing the distribution of each property (differentiating between red and white variants), and a correlation plot that shows how usually the amount of each property makes another one's amount grow bigger/smaller or stay the same.
 
-Last but not least, we implemented a predictive model that would give out the best variant of wine that should be chosen according to some important properties. This is essential when deciding for a wine to combine with the food.
+Last but not least, we implemented a predictive model that would give out the best variant of wine that should be chosen according to some important properties (third tab). This is essential when deciding for a wine to combine with the food.
 
 Data Source: https://archive.ics.uci.edu/ml/datasets/Wine+Quality
 

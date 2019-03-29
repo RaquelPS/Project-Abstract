@@ -1,7 +1,6 @@
 ---
 title: "Vinho Verde wine report"
 author: "Raquel Parra Suazo & Shenbin Zheng"
-date: "March 28, 2019"
 output: word_document
 always_allow_html: yes
 ---
