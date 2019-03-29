@@ -44,7 +44,7 @@ scale_vino=vino %>% select(-Taste,-Variant)
 ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  theme = shinytheme("cerulean"),
                  #shinythemes::themeSelector(),
-                 tabPanel(p(icon("table"),"Dataset"),
+                 tabPanel(p(icon("table"),"Examining wine"),
                           useShinyjs(),
                           sidebarLayout(position="left",
                                         sidebarPanel(
@@ -82,17 +82,17 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           )#SIDEBAR LAYOUT
                  ),#TAB PANEL 1
                  
-                 tabPanel(p(icon("bar-chart-o"),"Data Visualization"),
+                 tabPanel(p(icon("bar-chart-o"),"Understanding wine"),
                           mainPanel(
                             tabsetPanel(
-                              tabPanel("Taste",
+                              tabPanel("Tastes of Vinho Verde",
                                        selectInput('taste.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width = 6, class = "well",plotlyOutput('plot3')),                              
                                        column(width = 6, class = "well",plotlyOutput("plot5")),
                                        textOutput("taste.comments")
                               ),
                               
-                              tabPanel("Quality",
+                              tabPanel("Quality of Vinho Verde",
                                        selectInput('quality.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width=6,class="well",plotlyOutput('plot4')),
                                        column(width=6,class="well",plotlyOutput('plot6')),
@@ -105,19 +105,19 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        textOutput("comparison.comments")
                               ),
                               
-                              tabPanel("Properties",
+                              tabPanel("Properties behaviour",
                                        selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
                                        plotlyOutput("plot7"),
                                        textOutput("property.comments")
                               ),
                               
-                              tabPanel("Correlation between properties",
+                              tabPanel("Relation between properties",
                                        fluidRow(   
-                                         column(width=3,selectInput('xcol1', label = 'X Variable', choices = names(vino))),
-                                         column(width=3,selectInput('ycol1', label = 'Y Variable', choices = names(vino))),
-                                         column(width=3,numericInput('obsred', 'Number of Observations of Red wine', 500,
+                                         column(width=3,selectInput('xcol1', label = 'Property 1', choices = names(vino))),
+                                         column(width=3,selectInput('ycol1', label = 'Property 2', choices = names(vino))),
+                                         column(width=3,numericInput('obsred', 'Number of observations of red wine', 500,
                                                                      min = 1, max = nrow(vino %>% filter(Variant=="red")))),
-                                         column(width=3,numericInput('obswhite', 'Number of Observations of White wine', 500,
+                                         column(width=3,numericInput('obswhite', 'Number of observations of white wine', 500,
                                                                      min = 1, max = nrow(vino %>% filter(Variant=="white"))))
                                        ),
                                        plotlyOutput('plot2'),
@@ -127,7 +127,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           )#MAIN PANEL
                  ),#TAB PANEL 2
                  
-                 tabPanel(p(icon("wine-glass-alt") ,"Predictive model"),
+                 tabPanel(p(icon("wine-glass-alt") ,"Choosing wine"),
                           
                           tabsetPanel(
                             tabPanel(h2("What's the perfect wine for the ocassion?"),
@@ -164,7 +164,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                           mainPanel(
                             tabsetPanel(
                               tabPanel(p(icon("video"),"About"),
-                                       uiOutput("video")
+                                       uiOutput("video"),
+                                       uiOutput("link")
                               ),
                               
                               tabPanel(p(icon("paperclip"),"Documentation"),
@@ -226,7 +227,8 @@ server <- function(input, output,session) {
   }))# Filter data based on selections
   
   output$table.comments <- renderText({
-    "This is the dataset we are working with. The user can select the variables of interest, and download the new dataset with the selected variables."
+    "This is the dataset of Vinho Verde wines. You can select the variables of interest,
+    and download either the full dataset or the selection made."
   })
   
   
@@ -251,7 +253,9 @@ server <- function(input, output,session) {
   })# Summary
   
   output$summary.comments <- renderText({
-    "This is the output of the summary function in R. Here we can see which variables are factors and which are continuous. Those that are continuous are represented with their first quantile, their median, their third quantile, etc."
+    "This is the output of the summary function in R. There are variables that are categorical
+    and other that are numeric. Those that are continuous are represented with their first quantile,
+    median, third quantile, etc."
   })
   
   #Second chapter: correlation plot
@@ -270,7 +274,9 @@ server <- function(input, output,session) {
   })#Correlation plot
   
   output$correlation.comments=renderText({
-    "This is the correlation plot between two variables. The user can select the variables to plot and also the number of observations of each wine variant (red or white) in order to have cleaner plots."
+    "This chart shows the relation between two properties of interest. 
+Note that you can also enter the number of observations of each wine variant (red or white)
+    in order to have cleaner visualizations."
   })
   
   #Second chapter: taste pie
@@ -329,9 +335,10 @@ server <- function(input, output,session) {
   })
   
   output$taste.comments=renderText({
-    "These are the plots related with the percentage of each taste within the whole dataset. We can select the wine variant that we want in order to check which taste is the most common in the selected variant.
-    Notice that the barplot in the right hand side is representing the proportion of each taste within red and white wines directly, so that the choice of the wine variant does not affect it. 
-    With this barplot we also wanted to represent the large different of amount of data between red and white wines: we have much more white wines than red ones, reason of why we have higher bar in the white variant."
+    "The pie chart shows the percentage of each taste within the whole dataset. 
+You can see which taste is the most common within the selected variant of wine. 
+    Notice that the chart in the right hand side is not affected by that selection, and its mere 
+    purpose is to show the difference in proportion of red and white wines."
   })
   
   #Second chapter: quality pie
@@ -395,8 +402,10 @@ server <- function(input, output,session) {
   })
   
   output$quality.comments=renderText({
-    "Here we have ploted the distribution of the dataset in terms of the quality and variant, so that we can see the percentage of each quality within the variant.
-    In the right hand side we have also ploted a barplot to point out the same conclusion as before: the amount of white wine's observation is much more than the red ones"
+    "The pie chart shows the percentage of each quality within the whole dataset. 
+You can see which quality is the most common within the selected variant of wine. 
+    Notice that the chart in the right hand side is not affected by that selection, and its mere 
+    purpose is to show the difference in proportion of red and white wines."
   })
   
   #Second chapter: boxplots of each variable
@@ -409,7 +418,8 @@ server <- function(input, output,session) {
   })
   
   output$property.comments=renderText({
-    "Boxplot of each variables (wine characteristics) within each wine taste. We can see the median, the mean and other useful information."
+    "This chart is a visual complement to the summary.
+    You can see the median, the mean and other useful information of each property of wine."
   })
   
   #Second chapter: variables comparison
@@ -425,7 +435,7 @@ server <- function(input, output,session) {
   })
   
   output$comparison.comments=renderText({
-    "We want to represent here the density form of each variables and to notice the differences, if there are any, between both wine variant (red and white)."
+    "This chart shows how each variable is distributed within each variant of wine."
   })
   
   data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
@@ -453,9 +463,13 @@ server <- function(input, output,session) {
       x=predict(mymodel, data.pred1)
       
       if(which.max(x)==1) {
-        print("Red Vinho Verde wines are an intense red color, sometimes with a pink or bright red foam, and with a vinous aroma, especially of berries. In the mouth it is fresh and intense, and a very good food wine.")
+        print("Red Vinho Verde wines are an intense red color, 
+              sometimes with a pink or bright red foam, and with a vinous aroma, 
+              especially of berries. In the mouth it is fresh and intense, and a very good food wine.")
       }else {
-        print("White Vinho Verde wines are citrus or straw-colored with rich, fruity and floral aromas, depending on the grapes that are used. They have a balanced palate, and are intense and very refreshing.")
+        print("White Vinho Verde wines are citrus or straw-colored with rich, 
+              fruity and floral aromas, depending on the grapes that are used. 
+              They have a balanced palate, and are intense and very refreshing.")
       }
     })
     
@@ -510,6 +524,11 @@ server <- function(input, output,session) {
     
   })
   
+  output$link <-renderUI({
+    url <- a("Vinho Verde official web page", href="http://www.vinhoverde.pt/en/homepage")
+    tagList(div(icon("external-link-alt"),url))  
+  })
+
   
   
   output$downloadReport <- downloadHandler(

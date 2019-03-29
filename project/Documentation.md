@@ -1,7 +1,7 @@
 
 This Shiny App is for searching, visualizating and extracting useful information about the Portuguese Vinho Verde wine variety. Our aim was to create a way for the user to understand this kind of wine and help them choose the correct variant to combine with their food by means of a predictive model (decision tree).
 
-The dataset used is related to red and white variants of the Portuguese "Vinho Verde" wine. The total number of observations is 6497 and from those 6031 had the complete necessary information in order to develop the app (Note that the proportion of white wines is much higher that the red wines one).
+The dataset used is related to red and white variants of the Portuguese "Vinho Verde" wine. The total number of observations is 6497 and from those 6031 had the complete necessary information in order to develop the app. Note that the proportion of white wines is much higher that the red wines one.
 
 In the first tab we can see a table containing the information chosen by the user, as well as a summary that helps us understand the units and ranges of each variable.
 

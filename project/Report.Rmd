@@ -18,7 +18,7 @@ This Shiny App is for searching, visualizating and extracting useful information
 
 ## Data Description
 
-As we said, the dataset is related to red and white variants of the Portuguese "Vinho Verde" wine. The total number of observations is 6497 where 6031 were useful for developing the app. The proportion of white wines is much higher that the red wines one. In fact, within 6031 observations there are 1570 red wines and 4461 white wines.
+The total number of observations is 6497 where 6031 were useful for developing the app. The proportion of white wines is much higher that the red wines one. In fact, within 6031 observations, there are 1570 red wines and 4461 white wines.
 
 ```{r data_load, include=FALSE}
 url="http://halweb.uc3m.es/esp/Personal/personas/imolina/esp/Archivos/VinhoVerdeQuality_Data.csv"
@@ -33,24 +33,24 @@ scale_vino=vino %>% select(-Taste,-Variant)
 
 ## Data exploration
 
-First of all, we would like to know what variables does the dataset contain.  
+We examine what variables does the dataset contain.  
 
 ```{r exploration, echo=FALSE}
 head(vino)
 str(vino)
 ```
 
-From the output above we know that we have 14 variables in total, where 2 variables ("Variant" and "Taste") are factors and the rest are numerical variables. The function **summary()** also provides useful information: 
+There are 14 variables in total, where 2 variables ("Variant" and "Taste") are factors and the rest are numerical variables. The function **summary()** also provides useful information: 
 
 ```{r exploration2, echo=FALSE}
 summary(vino)
 ```
 
-Here we can see additional information from each variable: median, mean, quantile, etc.
+Here we have some additional information from each variable: median, mean, quantile, etc.
 
 ## Data representation
 
-We aim to understand better the variables by means of ploting several graphs. We will focus on white wines, since it has more observations, but in the Shiny App the user can select which wine variant they find of interest in a interactive way.
+We aim to understand better the variables by means of ploting several graphs. We focus on white wines, since it has more observations, but in the Shiny App the user can select which wine variant they fancy in a interactive way.
 
 Here are ploted two pie charts that helps us see the distribution of "Taste" and "Quality":
 
@@ -95,7 +95,7 @@ p2 = ggplot(df, aes(x = "", y = value, fill = Quality)) +
 grid.arrange(p1, p2, ncol=2)
 ```
 
-After that, we check any significant values, such as the mean of each variable. For that we use a boxplot, differentiating between the six tastes that we have. Here we will represent only one boxplot, corresponding to the variable "fixed.acidity":
+We check now any significant values, such as the mean of each variable. For that we use a boxplot, differentiating between the six tastes that we have. Here we represent only one boxplot, corresponding to the variable "fixed.acidity":
 
 ```{r boxplot, echo=FALSE}
 #par(mfrow=c(1,1))
@@ -106,7 +106,7 @@ p<-ggplot(vino,aes_string(x="Taste",y=vino$fixed.acidity))+
 p
 ```
 
-The next plot we have done is somehow a density plot of each variable and differenced according to the 2 wine variants that we have. Again, we will focus only on one variable, which is "fixed.acidity":
+Next we study the distribution each variable and differenciate between the two wine variants that we have. Again, here we focus only on one variable, which is "fixed.acidity":
 
 ```{r density, echo=FALSE, warning=FALSE}
 p <- ggplot(vino, aes_string(x = vino$fixed.acidity)) + 
@@ -119,10 +119,10 @@ p <- ggplot(vino, aes_string(x = vino$fixed.acidity)) +
 p
 ```
 
-And a final plot which is a correlation plot between variables and each point is filled with colors according to which taste it belongs. We will represent here the correlation plot in "fixed.acidity", which will be a lineal plot because the correlation coefficient between one variable with itself is 1:
+Finally, we show the relation between properties by means of a correlation plot. We represent here the correlation between "fixed.acidity" and "density":
 
 ```{r correlation, echo=FALSE, warning=FALSE}
-p=ggplot(vino, aes_string(x=vino$fixed.acidity, y=vino$fixed.acidity,
+p=ggplot(vino, aes_string(x=vino$fixed.acidity, y=vino$density,
                           color=vino$Taste)) +
   geom_point(size=2, shape=23)+
   geom_smooth(method="lm", se=TRUE, fullrange=TRUE)+
