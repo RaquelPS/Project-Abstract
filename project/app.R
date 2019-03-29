@@ -438,6 +438,7 @@ You can see which quality is the most common within the selected variant of wine
     "This chart shows how each variable is distributed within each variant of wine."
   })
   
+  #Third chapter: prediction model
   data.pred=vino %>% select(c("fixed.acidity", "residual.sugar", "pH",
                               "alcohol", "quality", "Variant", "Taste"))
   mymodel<-rpart(as.factor(Variant)~., method="class", data = data.pred)
@@ -483,6 +484,10 @@ You can see which quality is the most common within the selected variant of wine
     })
   })
   
+
+  #First chapter: action button to download the dataset
+
+  #First chapter: download action button
   #Selected data download
   output$downloadData <- downloadHandler(
     filename = function() {
