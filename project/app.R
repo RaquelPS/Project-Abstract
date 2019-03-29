@@ -16,10 +16,11 @@
 # install.packages("shinythemes")
 # install.packages("gridExtra")
 # install.packages("e1071")
+# install.packages("webshot")
 
 packages = c("e1071","gridExtra","shinythemes","shinyLP","tidyverse","shiny","DT",
              "mice","BH","ggplot2","scales","devtools","Rcpp","rCharts","markdown",
-             "data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart")
+             "data.table","dplyr","shinyjs","plotly","vembedr","caret","rpart","webshot")
 lapply(packages, require, character.only = TRUE)
 
 ######################
@@ -73,8 +74,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                         
                                         mainPanel(
                                           tabsetPanel(type="tabs",
-                                                      tabPanel(p(icon("search"),"Exploration"), DT::dataTableOutput("table"),verbatimTextOutput("taste"),verbatimTextOutput("table.comments")),
-                                                      tabPanel("Summary", verbatimTextOutput("summary"), verbatimTextOutput("summary.comments"))        
+                                                      tabPanel(p(icon("search"),"Exploration"), DT::dataTableOutput("table"),textOutput("taste"),textOutput("table.comments")),
+                                                      tabPanel("Summary", verbatimTextOutput("summary"), textOutput("summary.comments"))        
                                                       
                                           )       
                                         )#MAIN PANEL
@@ -88,26 +89,26 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                        selectInput('taste.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width = 6, class = "well",plotlyOutput('plot3')),                              
                                        column(width = 6, class = "well",plotlyOutput("plot5")),
-                                       verbatimTextOutput("taste.comments")
+                                       textOutput("taste.comments")
                               ),
                               
                               tabPanel("Quality",
                                        selectInput('quality.pie', label = 'Variant', choices = unique(as.character(vino$Variant))),
                                        column(width=6,class="well",plotlyOutput('plot4')),
                                        column(width=6,class="well",plotlyOutput('plot6')),
-                                       verbatimTextOutput("quality.comments")
-                              ),
-                              
-                              tabPanel("Properties",
-                                       selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
-                                       plotlyOutput("plot7"),
-                                       verbatimTextOutput("property.comments")
+                                       textOutput("quality.comments")
                               ),
                               
                               tabPanel("Variant Comparison",
                                        selectInput("comp", label="Property" ,choices=c(unique(as.character(names(scale_vino))))),
                                        plotlyOutput("plot8"),
-                                       verbatimTextOutput("comparison.comments")
+                                       textOutput("comparison.comments")
+                              ),
+                              
+                              tabPanel("Properties",
+                                       selectInput('bp', label = 'Property', choices = c(unique(as.character(names(scale_vino))))),
+                                       plotlyOutput("plot7"),
+                                       textOutput("property.comments")
                               ),
                               
                               tabPanel("Correlation between properties",
@@ -120,7 +121,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                                      min = 1, max = nrow(vino %>% filter(Variant=="white"))))
                                        ),
                                        plotlyOutput('plot2'),
-                                       verbatimTextOutput("correlation.comments")
+                                       textOutput("correlation.comments")
                               )
                             )#TABSET PANEL
                           )#MAIN PANEL
@@ -129,7 +130,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                  tabPanel(p(icon("wine-glass-alt") ,"Predictive model"),
                           
                           tabsetPanel(
-                            tabPanel("What's the perfect wine for the ocassion?",
+                            tabPanel(h2("What's the perfect wine for the ocassion?"),
                                      mainPanel(
                                        sidebarLayout(position="left",
                                                      
@@ -148,8 +149,8 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                                                        actionButton("Enter", "Show me!")
                                                      ),
                                                      fluidPage(
-                                                       verbatimTextOutput("Pred"),
-                                                       verbatimTextOutput("Pred.comments"),
+                                                       h2(textOutput("Pred")),
+                                                       h3(em(textOutput("Pred.comments"),style = "color:black")),
                                                        uiOutput("buy")
                                                      )
                                                   )
@@ -172,6 +173,7 @@ ui <- navbarPage("Vinho Verde Wine EXPLORER",
                               ),
                               
                               tabPanel(p(icon("file-alt"),'Report'),
+                                       p("It may take a while to download...",icon("hourglass-half")),
                                        radioButtons('format', 'Document format', c('PDF', 'HTML', 'Word'),
                                                     inline = TRUE),
                                        downloadButton('downloadReport')
@@ -317,7 +319,7 @@ server <- function(input, output,session) {
   output$plot5 <- renderPlotly({
     p <- ggplot(vino, aes(x = Variant)) + 
       geom_bar(aes(y = ..count../sum(..count..), fill = Taste)) + 
-      scale_fill_brewer(palette = "Set3") + 
+      scale_fill_brewer(palette = "Set1") + 
       ylab("Percentage") + 
       theme_minimal()+
       ggtitle("Taste distribution in both variants")
@@ -383,7 +385,7 @@ server <- function(input, output,session) {
     vino$quality=as.factor(vino$quality)
     p <- ggplot(vino, aes(x = Variant)) + 
       geom_bar(aes(y = ..count../sum(..count..), fill = quality)) + 
-      scale_fill_brewer(palette = "Set3") + 
+      scale_fill_brewer(palette = "Set1") + 
       ylab("Percentage") + 
       theme_minimal()+
       ggtitle("Quality distribution in both variants")
@@ -401,7 +403,6 @@ server <- function(input, output,session) {
   output$plot7 <- renderPlotly({
     p<-ggplot(vino,aes_string(x="Taste",y=input$bp))+
       geom_boxplot(aes(color=Taste),outlier.shape = NA)+
-      scale_fill_brewer(palette = "Set3")+
       theme_minimal()
     p<-ggplotly(p)
     p
@@ -444,8 +445,8 @@ server <- function(input, output,session) {
     
     output$Pred <- renderText({
       x=predict(mymodel, data.pred1)
-      if(which.max(x)==1) print("Red")
-      else print("White")
+      if(which.max(x)==1) print("You should choose a red wine:")
+      else print("You should choose a white wine:")
     })
     
     output$Pred.comments=renderText({
@@ -508,6 +509,33 @@ server <- function(input, output,session) {
     HTML(paste0('<iframe width="800" height="500" src="https://www.youtube.com/embed/IXeNuHpOhHM" frameborder="0" allowfullscreen></iframe>'))
     
   })
+  
+  
+  
+  output$downloadReport <- downloadHandler(
+    filename = function() {
+      paste('my-report', sep = '.', switch(
+        input$format, PDF = 'pdf', HTML = 'html', Word = 'docx'
+      ))
+    },
+    
+    content = function(file) {
+      src <- normalizePath('Report.Rmd')
+      
+      # temporarily switch to the temp dir, in case you do not have write
+      # permission to the current working directory
+      owd <- setwd(tempdir())
+      on.exit(setwd(owd))
+      file.copy(src, 'Report.Rmd', overwrite = TRUE)
+      
+      library(rmarkdown)
+      out <- render('Report.Rmd', switch(
+        input$format,
+        PDF = pdf_document(), HTML = html_document(), Word = word_document()
+      ))
+      file.rename(out, file)
+    }
+  )
   
   
 }#SERVER
